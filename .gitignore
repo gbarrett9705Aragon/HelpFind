@@ -1,0 +1,14 @@
+# Google Drive shortcuts
+*.gsheet
+*.gslides
+*.gdraw
+
+# Local system files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary scratch and test files
+scratch/
+test-results/
+*.log

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HelpFind - Sun City Peachtree</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Mobile Device Frame Wrapper (Simulates mobile on desktop, native on mobile) -->
+  <div class="mobile-device-wrapper">
+    <div class="mobile-screen">
+      
+      <!-- Toast Notification Container -->
+      <div id="toast-container"></div>
+
+      <!-- Compact Mobile Header -->
+      <header>
+        <div class="nav-container">
+          <div class="logo-section">
+            <div class="logo-icon">HF</div>
+            <div class="logo-text">
+              <h1>HelpFind</h1>
+              <span>Sun City Peachtree</span>
+            </div>
+          </div>
+          
+          <!-- Dropdown Navigation Selection -->
+          <div class="provider-dropdown-container" style="display: flex; align-items: center; gap: 0.5rem;">
+            <div id="sync-status" class="sync-status-indicator synced" title="Synced with Sheets"></div>
+            <select id="nav-provider-dropdown" class="provider-dropdown-nav" onchange="handleProviderDropdownChange()">
+              <option value="choose" selected>Provider</option>
+              <option value="leave-review">Leave Review</option>
+              <option value="add-new">Add New</option>
+            </select>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main App Scroll Area -->
+      <main class="content-viewport">
+
+        <!-- VIEW 1: RESIDENT DIRECTORY (Default View) -->
+        <section id="view-directory" class="view-panel">
+          
+          <!-- Search & Niche Filter Header -->
+          <div class="search-filter-section">
+            <div class="search-input-group">
+              <span class="search-icon">🔍</span>
+              <input type="search" id="dir-search" class="search-input" placeholder="Search service providers..." oninput="filterDirectory()" autocomplete="off" name="helpfind-search">
+            </div>
+            
+            <div class="filter-row-dropdown" style="display: flex; gap: 0.5rem; width: 100%;">
+              <select id="dir-category" onchange="handleCategoryFilterChange()" style="flex: 1;">
+                <option value="all">Categories (All)</option>
+                <option value="Lifestyle & Convenience">Lifestyle & Convenience</option>
+                <option value="Property & Grounds Care">Property & Grounds Care</option>
+                <option value="Home Improvement">Home Improvement</option>
+                <option value="General Maintenance">General Maintenance</option>
+                <option value="ZZZ Other Category">ZZZ Other Category</option>
+              </select>
+              <select id="dir-service" onchange="filterDirectory()" disabled style="flex: 1;">
+                <option value="all">Service (All)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Vertical Provider List -->
+          <div id="vendors-list" class="mobile-vendors-list">
+            <!-- Dynamic Injection from app.js -->
+          </div>
+
+        </section>
+
+        <!-- VIEW 2: RECOMMENDATION FORM (Tap rating and Registration) -->
+        <section id="view-add-review" class="view-panel hidden">
+          <div class="form-container-mobile">
+            <div class="form-title-block">
+              <h2>Recommend a Provider</h2>
+              <p>Verify by tapping stars below.</p>
+            </div>
+
+            <form id="form-add-review">
+              
+              <!-- Contractor Selector -->
+              <div class="form-group" id="rev-select-wrapper">
+                <label for="rev-vendor-select">Select Contractor</label>
+                <select id="rev-vendor-select" class="form-input" onchange="toggleNewVendorFields()" required>
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+
+              <!-- New Contractor Registration Fields (Hidden by default) -->
+              <div id="new-vendor-fields" class="new-vendor-block hidden">
+                <h4 class="mb-2">New Contractor Details</h4>
+                <div class="form-group">
+                  <label for="new-vendor-name">Business Name</label>
+                  <input type="text" id="new-vendor-name" class="form-input" placeholder="e.g. Jack's Plumbing">
+                </div>
+                
+                <div class="form-group">
+                  <label for="new-vendor-category">Service Category</label>
+                  <select id="new-vendor-category" class="form-input" onchange="handleNewVendorCategoryChange()">
+                    <option value="" disabled selected>-- Select Category --</option>
+                    <option value="Lifestyle & Convenience">Lifestyle & Convenience</option>
+                    <option value="Property & Grounds Care">Property & Grounds Care</option>
+                    <option value="Home Improvement">Home Improvement</option>
+                    <option value="General Maintenance">General Maintenance</option>
+                    <option value="ZZZ Other Category">ZZZ Other Category</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="new-vendor-service">Service Type (Subcategory)</label>
+                  <select id="new-vendor-service" class="form-input" disabled>
+                    <option value="" disabled selected>-- Select Service --</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="new-vendor-phone">Phone Number</label>
+                  <input type="text" id="new-vendor-phone" class="form-input" placeholder="e.g. (555) 928-1122" pattern="\(\d{3}\) \d{3}-\d{4}" title="Expected format: (555) 555-5555">
+                  <span class="form-hint mt-2">Expected format: (555) 555-5555</span>
+                </div>
+
+                <div class="form-group">
+                  <label for="new-vendor-email">Email Address</label>
+                  <input type="email" id="new-vendor-email" class="form-input" placeholder="e.g. contact@business.com">
+                </div>
+              </div>
+
+              <!-- Review Comment / Notes -->
+              <div class="form-group">
+                <label for="rev-comment">Review Notes / Comments</label>
+                <textarea id="rev-comment" class="form-input" placeholder="Describe your experience with this contractor..." rows="3" required></textarea>
+              </div>
+
+              <!-- Job Cost Category -->
+              <div class="form-group">
+                <label for="rev-cost">Job Cost Category</label>
+                <select id="rev-cost" class="form-input">
+                  <option value="50" selected>💵 Under $100</option>
+                  <option value="150">💵 Medium ($100 - $300)</option>
+                  <option value="500">💵 Premium ($300+)</option>
+                </select>
+              </div>
+
+              <!-- Punctuality Checkbox -->
+              <div class="form-group-checkbox">
+                <input type="checkbox" id="rev-punctual" checked>
+                <label for="rev-punctual">⏱️ Contractor arrived on time</label>
+              </div>
+
+              <!-- Star Tap Rating -->
+              <div class="form-group text-center mt-4">
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Your Rating</label>
+                <div id="star-rating-container" class="star-rating-tap-container">
+                  <span class="star-tap" data-value="1" onclick="setStarRating(1)">★</span>
+                  <span class="star-tap" data-value="2" onclick="setStarRating(2)">★</span>
+                  <span class="star-tap" data-value="3" onclick="setStarRating(3)">★</span>
+                  <span class="star-tap" data-value="4" onclick="setStarRating(4)">★</span>
+                  <span class="star-tap" data-value="5" onclick="setStarRating(5)">★</span>
+                </div>
+                <input type="hidden" id="rev-rating" value="1">
+              </div>
+
+              <div class="mobile-form-actions mt-4">
+                <button type="button" class="btn btn-secondary" onclick="cancelRecommendation()">Cancel</button>
+                <button type="submit" class="btn btn-success">Submit</button>
+              </div>
+
+            </form>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- VIEW 3: PROVIDER DETAILS MODAL (Bottom-Sheet Slide-up) -->
+      <div id="vendor-modal" class="bottom-sheet-overlay hidden">
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-drag-handle" onclick="closeVendorModal()"></div>
+          <button class="close-sheet-btn" onclick="closeVendorModal()">&times;</button>
+          
+          <div id="modal-vendor-body">
+            <!-- Dynamic Details Injection from app.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 4: COMMUNITY PIN VERIFICATION OVERLAY (Slide-up Sheet) -->
+      <div id="pin-modal" class="bottom-sheet-overlay hidden">
+        <div class="bottom-sheet-content" style="text-align: center; padding-top: 2rem;">
+          <div class="bottom-sheet-drag-handle" onclick="closePinModal()"></div>
+          <button class="close-sheet-btn" onclick="closePinModal()">&times;</button>
+          
+          <div class="gate-icon-container" style="width: 50px; height: 50px; font-size: 1.5rem; margin: 0 auto 1rem;">🔑</div>
+          <h3>Verify Community PIN</h3>
+          <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.25rem;">Enter the 4-digit Sun City Peachtree Community PIN.</p>
+          
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <input type="password" id="community-pin-input" class="form-input text-center" maxlength="4" placeholder="••••" style="font-size: 1.80rem; letter-spacing: 0.4rem; padding: 0.4rem; font-family: monospace; width: 160px; margin: 0 auto;" autocomplete="one-time-code">
+          </div>
+          
+          <button class="btn btn-primary" onclick="verifyCommunityPIN()" style="width: 160px; margin: 0 auto;">Verify PIN</button>
+          <span class="form-hint mt-2">Hint: PIN is <strong>1948</strong></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="mockData.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if (location.search.includes('run-tests=true')) {
+      const script = document.createElement('script');
+      script.src = 'test.js';
+      document.body.appendChild(script);
+    }
+  </script>
+</body>
+</html>
