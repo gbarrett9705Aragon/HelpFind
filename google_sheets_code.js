@@ -2,7 +2,7 @@
  * Google Apps Script for HelpFind Google Sheet Integration
  * 
  * Instructions:
- * 1. Open your Google Sheet "HelpFindHomes".
+ * 1. Open your Google Sheet "ProviderList".
  * 2. Click "Extensions" > "Apps Script".
  * 3. Delete any default code and paste this script.
  * 4. Save and click "Deploy" > "New deployment".
@@ -21,8 +21,7 @@ function doPost(e) {
 }
 
 function handleRequest(e) {
-  // CORS configuration
-  
+  // CORS is handled natively by Google Apps Script web app redirects
   
   try {
     var params = e.parameter;
@@ -34,21 +33,28 @@ function handleRequest(e) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     var data = sheet.getDataRange().getValues();
     
-    // Find column indexes
-    var headersRow = data[0];
+    // Find column indexes (case-insensitive and trimmed)
+    var rawHeaders = data[0];
+    var headersRow = rawHeaders.map(function(h) { 
+      return String(h).trim().toLowerCase(); 
+    });
+    
     var idCol = headersRow.indexOf("id");
-    var timesUsedCol = headersRow.indexOf("Times_Used");
+    var timesUsedCol = headersRow.indexOf("times_used");
+    if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("timesused");
     var ratingCol = headersRow.indexOf("rating");
-    var reviewsCol = headersRow.indexOf("reviewCount");
+    var reviewsCol = headersRow.indexOf("reviewcount");
     
     // Fallbacks if columns don't exist yet
     if (idCol === -1) idCol = 0;
     if (timesUsedCol === -1) {
-      sheet.insertColumnAfter(headersRow.length);
-      sheet.getRange(1, headersRow.length + 1).setValue("Times_Used");
-      timesUsedCol = headersRow.length;
-      data = sheet.getDataRange().getValues(); // refresh
-      headersRow = data[0];
+      sheet.insertColumnAfter(rawHeaders.length);
+      sheet.getRange(1, rawHeaders.length + 1).setValue("Times_Used");
+      // Refresh headers
+      data = sheet.getDataRange().getValues();
+      rawHeaders = data[0];
+      headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
+      timesUsedCol = headersRow.indexOf("times_used");
     }
     
     var providerId = params.id;
@@ -82,19 +88,19 @@ function handleRequest(e) {
           .setMimeType(ContentService.MimeType.JSON);
       }
       
-      // Append a new provider row
+      // Append a new provider row matching columns dynamically
       var newRow = [];
       for (var col = 0; col < headersRow.length; col++) {
         var colName = headersRow[col];
         if (colName === "id") newRow.push(params.id);
-        else if (colName === "name") newRow.push(params.name);
+        else if (colName === "name" || colName === "provider") newRow.push(params.name);
         else if (colName === "category") newRow.push(params.category);
-        else if (colName === "service" || colName === "Service") newRow.push(params.service || "");
+        else if (colName === "service") newRow.push(params.service || "");
         else if (colName === "phone") newRow.push(params.phone);
-        else if (colName === "email") newRow.push(params.email || "");
+        else if (colName === "email" || colName.indexOf("email") !== -1) newRow.push(params.email || "");
         else if (colName === "rating") newRow.push(Number(params.rating || 5));
-        else if (colName === "reviewCount") newRow.push(1);
-        else if (colName === "Times_Used") newRow.push(1);
+        else if (colName === "reviewcount") newRow.push(1);
+        else if (colName === "times_used" || colName === "timesused") newRow.push(1);
         else newRow.push("");
       }
       sheet.appendRow(newRow);
