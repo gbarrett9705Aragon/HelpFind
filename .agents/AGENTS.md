@@ -7,7 +7,7 @@
 ## 📱 Technical Architecture
 The app is built as a lightweight, premium, mobile-first Single Page Application (SPA) using HTML, Vanilla CSS, and JavaScript. 
 - **Database Layer**: Simulates data persistence using `localStorage`. Seeds default values and migrates outdated schemas using [mockData.js](file:///g:/My Drive/HelpFind/mockData.js).
-- **Google Sheets Integration**: Connects to the community's `HelpFindHomes` Google Sheet via a Google Apps Script Web App proxy to sync ratings, new providers, and hire clicks.
+- **Google Sheets Integration**: Connects to the community's `ProviderList` Google Sheet via a Google Apps Script Web App proxy to sync ratings, new providers, and hire clicks.
 
 ---
 
@@ -23,7 +23,7 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 
 ## 🔑 Crucial Project Settings
 - **Community PIN**: `1948` (Required to recommend or add new contractors).
-- **API URL Connection**: The Apps Script URL must be pasted into the `GOOGLE_SHEETS_API_URL` variable at the top of `app.js` once deployed.
+- **API URL Connection**: The Apps Script URL must be pasted into the `GOOGLE_SHEETS_API_URL` variable at the top of `app.js` once deployed. Current deployed URL: `https://script.google.com/macros/s/AKfycbxHHw5aIgnRdY8ZsBzIq5RxFyLjpjCqKWqN6HgFBSjyLsgNdwA0hhNk8gAIRQAkiE5s/exec`
 - **Local Dev Port**: Running on `http://localhost:3000` via a background browser-sync task.
 
 ---
@@ -50,4 +50,21 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Added visible scrollbars globally for senior readability and discoverability.
 - [x] Swapped UI styling to a high-contrast premium Light Mode (Royal Blue focus links, slate outlines, high-contrast dark text, amber rating indicators) tailored for senior users.
 - [x] Created client-side offline sync queue to handle connection failures gracefully with a visual sync indicator dot in the header.
+- [x] Connected local repository and pushed codebase to GitHub.
+- [x] Deployed and published the SPA live on Vercel at `https://help-find.vercel.app`.
+- [x] Fixed Apps Script Web App CORS errors (removed `.setHeaders()` TypeErrors) and implemented robust, case-insensitive, spacing-agnostic header matching.
+- [x] Added `?reset-db=true` query trigger for easy client database resets.
+
+---
+
+## 🏁 Handover Notes & Next Steps
+1. **Current Operating State**: 
+   * The app is **100% live** at `https://help-find.vercel.app`.
+   * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to Vercel.
+   * New registrations, rating changes, and hire counts automatically update both the browser cache and append/increment rows in `ProviderList.gsheet` in real-time.
+2. **Next Steps for Next Session**:
+   * Introduce resident-facing search enhancements (e.g. searching review text comments or sorting by punctuality).
+   * Incorporate contractor photo uploads via Apps Script base64 sync.
+   * Add neighborhood announcement banners controlled directly from a tab in `ProviderList.gsheet`.
+
 
