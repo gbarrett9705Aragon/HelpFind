@@ -459,7 +459,8 @@ function handleSubmitReview(e) {
       offersSeniorDiscount: true,
       punctualityScore: punctual ? 100 : 0,
       timesUsed: 1,
-      description: `Trusted provider for ${newService}.`
+      description: `Trusted provider for ${newService}.`,
+      synced: false
     };
 
     vendors.push(newVendorObj);
@@ -965,17 +966,25 @@ function mergeVendors(localVendors, serverVendors) {
     if (lv) {
       merged.push({
         ...lv,
-        ...sv
+        ...sv,
+        synced: true // Confirmed on server
       });
     } else {
-      merged.push(sv);
+      merged.push({
+        ...sv,
+        synced: true // Confirmed on server
+      });
     }
   });
   
   // Add any local vendors that do not exist on the server yet (pending sync)
   localVendors.forEach(lv => {
     if (!serverMap.has(lv.id)) {
-      merged.push(lv);
+      // Keep it ONLY if it has never been synced to the server (e.g. freshly created local draft)
+      // If it has synced: true but is missing on the server, it was deleted by an admin
+      if (lv.synced !== true) {
+        merged.push(lv);
+      }
     }
   });
   
