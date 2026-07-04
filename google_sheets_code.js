@@ -22,18 +22,13 @@ function doPost(e) {
 
 function handleRequest(e) {
   // CORS configuration
-  var headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
-  };
+  
   
   try {
     var params = e.parameter;
     if (!params.action) {
       return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Missing action parameter" }))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeaders(headers);
+        .setMimeType(ContentService.MimeType.JSON);
     }
     
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -70,8 +65,7 @@ function handleRequest(e) {
     if (params.action === "increment") {
       if (rowIdx === -1) {
         return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Provider ID not found" }))
-          .setMimeType(ContentService.MimeType.JSON)
-          .setHeaders(headers);
+          .setMimeType(ContentService.MimeType.JSON);
       }
       
       var currentVal = sheet.getRange(rowIdx, timesUsedCol + 1).getValue() || 0;
@@ -79,15 +73,13 @@ function handleRequest(e) {
       sheet.getRange(rowIdx, timesUsedCol + 1).setValue(newVal);
       
       return ContentService.createTextOutput(JSON.stringify({ status: "success", new_times_used: newVal }))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeaders(headers);
+        .setMimeType(ContentService.MimeType.JSON);
     }
     
     if (params.action === "add_provider") {
       if (rowIdx !== -1) {
         return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Provider ID already exists" }))
-          .setMimeType(ContentService.MimeType.JSON)
-          .setHeaders(headers);
+          .setMimeType(ContentService.MimeType.JSON);
       }
       
       // Append a new provider row
@@ -108,15 +100,13 @@ function handleRequest(e) {
       sheet.appendRow(newRow);
       
       return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Provider registered successfully" }))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeaders(headers);
+        .setMimeType(ContentService.MimeType.JSON);
     }
     
     if (params.action === "rate") {
       if (rowIdx === -1) {
         return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Provider ID not found" }))
-          .setMimeType(ContentService.MimeType.JSON)
-          .setHeaders(headers);
+          .setMimeType(ContentService.MimeType.JSON);
       }
       
       var newRating = Number(params.rating);
@@ -131,17 +121,14 @@ function handleRequest(e) {
       sheet.getRange(rowIdx, reviewsCol + 1).setValue(nextCount);
       
       return ContentService.createTextOutput(JSON.stringify({ status: "success", rating: nextRating, reviewCount: nextCount }))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeaders(headers);
+        .setMimeType(ContentService.MimeType.JSON);
     }
     
     return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Unknown action" }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(headers);
+      .setMimeType(ContentService.MimeType.JSON);
       
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(headers);
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
