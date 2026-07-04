@@ -1,7 +1,7 @@
 // app.js - State Controller and Interaction Logic for HelpFind Sun City Peachtree
 
 // Google Sheets API Web App URL (Connects to HelpFindHomes.gsheet via Apps Script Web App)
-const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzp_REPLACE_WITH_YOUR_SCRIPT_ID/exec";
+const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxvyT1MJFSCKrSOEPxGwdlbfXWvfwJKPcmv7oSD2qDrIqDnfC_QkXWEY7bWKpcafJxB/exec";
 
 // Global State
 const COMMUNITY_PIN = "1948"; // 4-digit community PIN for Sun City Peachtree
