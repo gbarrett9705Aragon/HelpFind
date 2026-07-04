@@ -61,6 +61,7 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Added permanent reaffirmation notices in review forms.
 - [x] Implemented robust, race-resilient bidirectional directory sync (`syncProvidersFromServer` & `mergeVendors`) to download spreadsheet additions to all user devices.
 - [x] Standardized sub-sheet references to explicitly load `"ProviderList"` and `"AuditLedger"` by name, avoiding errors when users view logs.
+- [x] Propagated spreadsheet deletions to client devices by tracking a client-side `synced` state flag on local vendor data.
 
 ---
 
