@@ -23,7 +23,7 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 
 ## 🔑 Crucial Project Settings
 - **Community PIN**: `1948` (Required to recommend or add new contractors).
-- **API URL Connection**: The Apps Script URL must be pasted into the `GOOGLE_SHEETS_API_URL` variable at the top of `app.js` once deployed. Current deployed URL: `https://script.google.com/macros/s/AKfycbxHHw5aIgnRdY8ZsBzIq5RxFyLjpjCqKWqN6HgFBSjyLsgNdwA0hhNk8gAIRQAkiE5s/exec`
+- **API URL Connection**: The Apps Script URL must be pasted into the `GOOGLE_SHEETS_API_URL` variable at the top of `app.js` once deployed. Current deployed URL: `https://script.google.com/macros/s/AKfycbwTE8KVdDiFzPjylOIgq8AVwmi_O3nprf3cosnRifSmZjSHE_befpJzATYH4DMJiXU7/exec`
 - **Local Dev Port**: Running on `http://localhost:3000` via a background browser-sync task.
 
 ---
@@ -54,14 +54,22 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Deployed and published the SPA live on Vercel at `https://help-find.vercel.app`.
 - [x] Fixed Apps Script Web App CORS errors (removed `.setHeaders()` TypeErrors) and implemented robust, case-insensitive, spacing-agnostic header matching.
 - [x] Added `?reset-db=true` query trigger for easy client database resets.
+- [x] Implemented a mandatory legal consent terms splash gate overlay upon initial launch.
+- [x] Integrated client-side anonymous device UUID signature generation and localStorage tracking.
+- [x] Built dynamic Terms of Service fetching directly from `"Terms of Service for HelpFind.gdoc"` on Google Drive.
+- [x] Created secure backend consent audit trail logging to a newly generated `"AuditLedger"` sheet tab.
+- [x] Added permanent reaffirmation notices in review forms.
+- [x] Implemented robust, race-resilient bidirectional directory sync (`syncProvidersFromServer` & `mergeVendors`) to download spreadsheet additions to all user devices.
+- [x] Standardized sub-sheet references to explicitly load `"ProviderList"` and `"AuditLedger"` by name, avoiding errors when users view logs.
 
 ---
 
 ## 🏁 Handover Notes & Next Steps
 1. **Current Operating State**: 
-   * The app is **100% live** at `https://help-find.vercel.app`.
+   * The app is **100% live** at `https://help-find.vercel.app` (fully synced with repository commits).
    * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to Vercel.
-   * New registrations, rating changes, and hire counts automatically update both the browser cache and append/increment rows in `ProviderList.gsheet` in real-time.
+   * New registrations, rating changes, and hire counts automatically update both the browser cache and append/increment rows in `ProviderList` spreadsheet in real-time.
+   * Device UUID consent signatures and timestamps are appended automatically to the `AuditLedger` tab.
 2. **Next Steps for Next Session**:
    * Introduce resident-facing search enhancements (e.g. searching review text comments or sorting by punctuality).
    * Incorporate contractor photo uploads via Apps Script base64 sync.
