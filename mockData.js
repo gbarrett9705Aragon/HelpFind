@@ -767,7 +767,7 @@ function initDatabase(forceReset = false) {
   if (!localStorage.getItem("helpfind_vendors")) {
     localStorage.setItem("helpfind_vendors", JSON.stringify(DEFAULT_VENDORS));
   } else {
-    // Migration: Ensure timesUsed and service properties exist on all cached vendors
+    // Migration: Ensure timesUsed, service, and synced properties exist on all cached vendors
     try {
       const cached = JSON.parse(localStorage.getItem("helpfind_vendors"));
       let updated = false;
@@ -780,6 +780,10 @@ function initDatabase(forceReset = false) {
         if (v.service === undefined) {
           const def = DEFAULT_VENDORS.find(d => d.id === v.id);
           v.service = def ? def.service : "";
+          updated = true;
+        }
+        if (v.synced === undefined) {
+          v.synced = true;
           updated = true;
         }
       });
