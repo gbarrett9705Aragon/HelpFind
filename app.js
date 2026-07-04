@@ -16,6 +16,14 @@ let activeFilters = {
 
 // DOM Elements & Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
+  // Reset database via URL parameter
+  if (location.search.includes('reset-db=true')) {
+    localStorage.clear();
+    initDatabase(true);
+    location.href = location.origin + location.pathname;
+    return;
+  }
+
   // Initialize mock data database
   initDatabase();
   
