@@ -94,17 +94,17 @@
       pinInput.value = '9999';
       verifyCommunityPIN();
       
-      await wait(500);
+      await wait(1000);
       if (pinModal.classList.contains('hidden') || isPinVerified) {
         throw new Error("PIN modal closed or isPinVerified set to true with incorrect PIN");
       }
       logToRunner("SUCCESS: Incorrect PIN rejected.");
       
       // 5. Enter correct PIN
-      pinInput.value = '1948';
+      pinInput.value = 'SCP2';
       verifyCommunityPIN();
       
-      await wait(500);
+      await wait(1000);
       
       // 6. Verify PIN modal is closed, and view has switched to add-review
       if (!pinModal.classList.contains('hidden')) {

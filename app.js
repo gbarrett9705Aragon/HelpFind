@@ -4,8 +4,7 @@
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwTE8KVdDiFzPjylOIgq8AVwmi_O3nprf3cosnRifSmZjSHE_befpJzATYH4DMJiXU7/exec";
 
 // Global State
-const COMMUNITY_PIN = "1948"; // 4-digit community PIN for Sun City Peachtree
-let isPinVerified = false; // Cache PIN verification in current browser session
+let isPinVerified = !!sessionStorage.getItem('helpfind_session_pin'); // Cache PIN verification in current browser session
 let actionPending = null; // 'leave-review' or 'add-new'
 let currentView = 'directory';
 let activeFilters = {
@@ -140,22 +139,40 @@ function closePinModal() {
   actionPending = null;
 }
 
-function verifyCommunityPIN() {
+async function verifyCommunityPIN() {
   const pinInput = document.getElementById('community-pin-input');
   const pin = pinInput.value.trim();
+  const verifyBtn = document.querySelector('#pin-modal .btn-primary');
 
-  if (pin === COMMUNITY_PIN) {
-    isPinVerified = true;
-    document.getElementById('pin-modal').classList.add('hidden');
-    executeGatedAction();
-    showToast('PIN verified. Access granted.');
-  } else {
+  if (!pin) return;
+
+  verifyBtn.disabled = true;
+  verifyBtn.textContent = 'Verifying...';
+
+  try {
+    const response = await fetch(`${GOOGLE_SHEETS_API_URL}?action=verify_pin&pin=${encodeURIComponent(pin)}`);
+    if (!response.ok) throw new Error('Network error during verification');
+    
+    const data = await response.json();
+    if (data.status === 'success') {
+      isPinVerified = true;
+      sessionStorage.setItem('helpfind_session_pin', pin);
+      document.getElementById('pin-modal').classList.add('hidden');
+      executeGatedAction();
+      showToast('PIN verified. Access granted.');
+    } else {
+      throw new Error(data.message || 'Invalid PIN');
+    }
+  } catch (err) {
     // Add visual error shake
     pinInput.style.animation = 'none';
     setTimeout(() => {
       pinInput.style.animation = 'scaleIn 0.2s ease-out';
     }, 10);
-    showToast('Invalid Community PIN. Please try again.', true);
+    showToast(err.message || 'Invalid Community PIN. Please try again.', true);
+  } finally {
+    verifyBtn.disabled = false;
+    verifyBtn.textContent = 'Verify PIN';
   }
 }
 
@@ -495,11 +512,12 @@ function handleSubmitReview(e) {
   }
 
   // Sync to Google Sheet Database in background
+  const sessionPin = sessionStorage.getItem('helpfind_session_pin') || '';
   if (isNew) {
-    const addUrl = `${GOOGLE_SHEETS_API_URL}?action=add_provider&id=${vendorId}&name=${encodeURIComponent(newName)}&category=${encodeURIComponent(newCategory)}&service=${encodeURIComponent(newService)}&phone=${encodeURIComponent(newPhone)}&email=${encodeURIComponent(newEmail)}&rating=${rating}`;
+    const addUrl = `${GOOGLE_SHEETS_API_URL}?action=add_provider&id=${vendorId}&name=${encodeURIComponent(newName)}&category=${encodeURIComponent(newCategory)}&service=${encodeURIComponent(newService)}&phone=${encodeURIComponent(newPhone)}&email=${encodeURIComponent(newEmail)}&rating=${rating}&pin=${encodeURIComponent(sessionPin)}`;
     addToSyncQueue(addUrl);
   } else {
-    const rateUrl = `${GOOGLE_SHEETS_API_URL}?action=rate&id=${vendorId}&rating=${rating}`;
+    const rateUrl = `${GOOGLE_SHEETS_API_URL}?action=rate&id=${vendorId}&rating=${rating}&pin=${encodeURIComponent(sessionPin)}`;
     addToSyncQueue(rateUrl);
   }
 

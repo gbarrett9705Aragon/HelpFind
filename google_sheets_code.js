@@ -12,6 +12,8 @@
  * 8. Paste the Web App URL at the top of your `app.js` under `GOOGLE_SHEETS_API_URL`.
  */
 
+var CORRECT_PIN = "SCP2";
+
 function doGet(e) {
   return handleRequest(e);
 }
@@ -86,6 +88,11 @@ function handleRequest(e) {
     }
     
     if (params.action === "add_provider") {
+      if (params.pin !== CORRECT_PIN) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Unauthorized: Invalid Community PIN" }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
       if (rowIdx !== -1) {
         return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Provider ID already exists" }))
           .setMimeType(ContentService.MimeType.JSON);
@@ -113,6 +120,11 @@ function handleRequest(e) {
     }
     
     if (params.action === "rate") {
+      if (params.pin !== CORRECT_PIN) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Unauthorized: Invalid Community PIN" }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
       if (rowIdx === -1) {
         return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Provider ID not found" }))
           .setMimeType(ContentService.MimeType.JSON);
@@ -240,6 +252,16 @@ function handleRequest(e) {
           .setMimeType(ContentService.MimeType.JSON);
       } catch (err) {
         return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    if (params.action === "verify_pin") {
+      if (params.pin === CORRECT_PIN) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "PIN verified successfully" }))
+          .setMimeType(ContentService.MimeType.JSON);
+      } else {
+        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Invalid Community PIN" }))
           .setMimeType(ContentService.MimeType.JSON);
       }
     }
