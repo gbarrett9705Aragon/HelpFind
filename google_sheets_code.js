@@ -30,7 +30,10 @@ function handleRequest(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("ProviderList");
+    if (!sheet) {
+      sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    }
     var data = sheet.getDataRange().getValues();
     
     // Find column indexes (case-insensitive and trimmed)
@@ -128,6 +131,117 @@ function handleRequest(e) {
       
       return ContentService.createTextOutput(JSON.stringify({ status: "success", rating: nextRating, reviewCount: nextCount }))
         .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (params.action === "consent") {
+      var auditSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("AuditLedger");
+      if (!auditSheet) {
+        auditSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("AuditLedger");
+        auditSheet.appendRow(["UUID", "Timestamp", "Hashed_IP", "Terms_Version"]);
+        auditSheet.getRange("A1:D1").setFontWeight("bold");
+        auditSheet.setFrozenRows(1);
+      }
+      
+      auditSheet.appendRow([
+        params.uuid || "",
+        params.timestamp || "",
+        params.hashed_ip || "",
+        params.terms_version || ""
+      ]);
+      
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Consent audit logged successfully" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (params.action === "get_terms") {
+      try {
+        var files = DriveApp.getFilesByName("Terms of Service for HelpFind");
+        if (files.hasNext()) {
+          var file = files.next();
+          var doc = DocumentApp.openById(file.getId());
+          var text = doc.getBody().getText();
+          return ContentService.createTextOutput(JSON.stringify({ status: "success", terms: text }))
+            .setMimeType(ContentService.MimeType.JSON);
+        } else {
+          return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Terms document not found on Google Drive" }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+      } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    if (params.action === "get_providers") {
+      try {
+        var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("ProviderList");
+        if (!sheet) {
+          sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+        }
+        var data = sheet.getDataRange().getValues();
+        if (data.length <= 1) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "success", providers: [] }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+        
+        var rawHeaders = data[0];
+        var headersRow = rawHeaders.map(function(h) { 
+          return String(h).trim().toLowerCase(); 
+        });
+        
+        var providers = [];
+        for (var i = 1; i < data.length; i++) {
+          var row = data[i];
+          var provider = {};
+          var hasData = false;
+          
+          for (var col = 0; col < headersRow.length; col++) {
+            var colName = headersRow[col];
+            var val = row[col];
+            if (val !== undefined && val !== null && String(val).trim() !== "") {
+              hasData = true;
+            }
+            
+            if (colName === "id") {
+              provider.id = String(val).trim();
+            } else if (colName === "name" || colName === "provider") {
+              provider.name = String(val).trim();
+            } else if (colName === "category") {
+              provider.category = String(val).trim();
+            } else if (colName === "service") {
+              provider.service = String(val).trim();
+            } else if (colName === "phone") {
+              provider.phone = String(val).trim();
+            } else if (colName === "email" || colName.indexOf("email") !== -1) {
+              provider.email = String(val).trim();
+            } else if (colName === "rating") {
+              provider.rating = Number(val) || 5;
+            } else if (colName === "reviewcount") {
+              provider.reviewCount = Number(val) || 1;
+            } else if (colName === "times_used" || colName === "timesused") {
+              provider.timesUsed = Number(val) || 0;
+            }
+          }
+          
+          if (!hasData || !provider.id) continue;
+          
+          // Defaults for visual elements not in GSheet columns
+          provider.isPremium = false;
+          provider.hasLeadsPlan = false;
+          provider.minJobCost = 50;
+          provider.offersSeniorDiscount = true;
+          provider.punctualityScore = 100;
+          provider.description = "Trusted provider for " + (provider.service || provider.category) + ".";
+          
+          providers.push(provider);
+        }
+        
+        return ContentService.createTextOutput(JSON.stringify({ status: "success", providers: providers }))
+          .setMimeType(ContentService.MimeType.JSON);
+      } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
     }
     
     return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Unknown action" }))

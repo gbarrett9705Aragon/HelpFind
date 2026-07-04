@@ -2,6 +2,7 @@
 *.gsheet
 *.gslides
 *.gdraw
+*.gdoc
 
 # Local system files
 Thumbs.db

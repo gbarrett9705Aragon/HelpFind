@@ -22,6 +22,42 @@
       // Clear and re-initialize database for a clean test run
       localStorage.clear();
       initDatabase();
+      checkConsent();
+      
+      // A. Verify consent gate is shown
+      const consentModal = document.getElementById('consent-modal');
+      if (consentModal.classList.contains('hidden')) {
+        throw new Error("Consent modal is not visible after database reset");
+      }
+      logToRunner("SUCCESS: Consent modal visibility verified.");
+
+      // B. Verify "Agree and Enter" button is disabled initially
+      const consentCheckbox = document.getElementById('consent-checkbox');
+      const consentBtn = document.getElementById('consent-btn');
+      if (!consentBtn.disabled) {
+        throw new Error("Consent button is not disabled when checkbox is unchecked");
+      }
+      logToRunner("SUCCESS: Consent button disabled state verified.");
+
+      // C. Toggle checkbox and verify button is enabled
+      consentCheckbox.checked = true;
+      toggleConsentButton();
+      if (consentBtn.disabled) {
+        throw new Error("Consent button remained disabled after checking checkbox");
+      }
+      logToRunner("SUCCESS: Consent button enabled state verified.");
+
+      // D. Accept consent and verify modal closes and UUID is saved
+      await acceptConsent();
+      await wait(500);
+
+      if (!consentModal.classList.contains('hidden')) {
+        throw new Error("Consent modal did not close after agreement");
+      }
+      if (!localStorage.getItem('helpfind_consent_uuid')) {
+        throw new Error("Consent UUID not saved in localStorage");
+      }
+      logToRunner("SUCCESS: Consent agreement registered and modal closed.");
       
       // 1. Initial State Check
       const viewDir = document.getElementById('view-directory');
@@ -162,10 +198,11 @@
       }
       
       const vendors = JSON.parse(localStorage.getItem('helpfind_vendors') || '[]');
-      const addedVendor = vendors.find(v => v.name === "Grady");
+      const addedVendor = [...vendors].reverse().find(v => v.name === "Grady");
       if (!addedVendor) {
         throw new Error("New vendor 'Grady' was not saved to localStorage");
       }
+
       if (addedVendor.timesUsed !== 1) {
         throw new Error(`New vendor 'timesUsed' is ${addedVendor.timesUsed}, expected 1`);
       }

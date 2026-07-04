@@ -1,7 +1,7 @@
 // app.js - State Controller and Interaction Logic for HelpFind Sun City Peachtree
 
 // Google Sheets API Web App URL (Connects to HelpFindHomes.gsheet via Apps Script Web App)
-const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxHHw5aIgnRdY8ZsBzIq5RxFyLjpjCqKWqN6HgFBSjyLsgNdwA0hhNk8gAIRQAkiE5s/exec";
+const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwTE8KVdDiFzPjylOIgq8AVwmi_O3nprf3cosnRifSmZjSHE_befpJzATYH4DMJiXU7/exec";
 
 // Global State
 const COMMUNITY_PIN = "1948"; // 4-digit community PIN for Sun City Peachtree
@@ -41,7 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Set up network listeners for sync status
-  window.addEventListener('online', processSyncQueue);
+  window.addEventListener('online', () => {
+    processSyncQueue();
+    syncProvidersFromServer();
+  });
   window.addEventListener('offline', () => updateSyncStatus('offline'));
 
   // Initialize sync status
@@ -53,6 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Boot directly to directory view
   switchView('directory');
+
+  // Check mandatory legal consent gate
+  checkConsent();
+
+  // Sync contractor list from Google Sheet in background
+  syncProvidersFromServer();
 });
 
 // Toast notification helper
@@ -638,6 +647,9 @@ async function processSyncQueue() {
   isProcessingQueue = false;
   updateSyncStatus('synced');
   console.log('Sync queue completely processed and empty.');
+
+  // Sync latest providers list after processing queue
+  syncProvidersFromServer();
 }
 
 // Dropdown Cascade Helpers
@@ -683,5 +695,308 @@ function handleNewVendorCategoryChange() {
       opt.textContent = srv;
       serviceSelect.appendChild(opt);
     });
+  }
+}
+
+// === MANDATORY LEGAL CONSENT AND AUDIT FLOW ===
+
+const TERMS_VERSION = '1.0';
+let termsTextCache = '';
+
+const FALLBACK_TERMS_TEXT = `
+  <h3>HelpFind - Terms of Service</h3>
+  <p><strong>Effective Date: July 4, 2026</strong></p>
+  <p>Welcome to HelpFind, a hyper-local service provider directory built for the Sun City Peachtree retirement community. Please read these Terms of Service carefully before using our application.</p>
+
+  <h3>1. Agreement to Terms</h3>
+  <p>By accessing or using HelpFind, you agree to be bound by these Terms of Service. If you do not agree to all of these terms, you may not use the application.</p>
+
+  <h3>2. Private Community Directory</h3>
+  <p>HelpFind is a private community tool. You must be a resident of Sun City Peachtree to use the directory. Sharing directory contents, contact details, or community PINs with non-residents or commercial entities is strictly prohibited.</p>
+
+  <h3>3. Recommendations and Community Integrity</h3>
+  <p>Any rating, review, or contractor recommendation you submit must represent your own honest, first-hand service experience. Submitting false, malicious, or commercial self-promotional reviews is prohibited. Form submissions are verified and protected via the community PIN gate.</p>
+
+  <h3>4. Contractor Engagement & Disclaimers</h3>
+  <p>HelpFind does not perform background checks, verify licenses, verify insurance, or guarantee the quality of any contractor listed. Residents are solely responsible for conducting their own due diligence before hiring any provider. HelpFind is not liable for disputes, property damage, financial loss, or personal injuries arising from transactions between residents and contractors.</p>
+
+  <h3>5. Auditing & Consent Flow</h3>
+  <p>To prevent spam, preserve community integrity, and ensure compliance, a device signature (UUID), agreement timestamp, and hashed IP address will be collected and logged to our secure backend ledger upon your consent. No direct personal identity information (such as name or email) is automatically linked to your device ID in this audit log.</p>
+
+  <h3>6. Reaffirmation of Terms</h3>
+  <p>Each time you submit a review or register a contractor, you reaffirm your agreement to these Terms of Service in their entirety.</p>
+`;
+
+// UUID Version 4 Generator
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// Fetch Terms of Service dynamically from Google Sheets/Drive with fallback
+async function fetchTermsOfService() {
+  const container = document.getElementById('terms-text-container');
+  const loading = document.getElementById('terms-loading-indicator');
+  
+  try {
+    const response = await fetch(`${GOOGLE_SHEETS_API_URL}?action=get_terms`);
+    if (!response.ok) throw new Error('Network error fetching terms');
+    const data = await response.json();
+    
+    if (data.status === 'success' && data.terms) {
+      // Split by double newlines, clean empty segments and map to paragraph / header tags
+      const formattedTerms = data.terms
+        .split('\n\n')
+        .map(p => p.trim())
+        .filter(p => p.length > 0)
+        .map(p => {
+          if (p.startsWith('#') || p.startsWith('1.') || p.startsWith('2.') || p.startsWith('3.') || p.startsWith('4.') || p.startsWith('5.') || p.startsWith('6.')) {
+            return `<h3>${p.replace(/^#+\s*/, '')}</h3>`;
+          }
+          return `<p>${p}</p>`;
+        })
+        .join('');
+      
+      termsTextCache = formattedTerms || FALLBACK_TERMS_TEXT;
+    } else {
+      console.warn('Apps Script returned error or empty terms, using fallback:', data.message);
+      termsTextCache = FALLBACK_TERMS_TEXT;
+    }
+  } catch (err) {
+    console.warn('Failed to load terms from backend, using fallback:', err);
+    termsTextCache = FALLBACK_TERMS_TEXT;
+  }
+  
+  // Render terms in overlay container
+  container.innerHTML = termsTextCache;
+  loading.classList.add('hidden');
+  container.classList.remove('hidden');
+}
+
+// Verify Consent status in local storage and toggle modal overlay
+function checkConsent() {
+  const uuid = localStorage.getItem('helpfind_consent_uuid');
+  const termsVersion = localStorage.getItem('helpfind_consent_terms_version');
+  const modal = document.getElementById('consent-modal');
+  
+  if (!uuid || termsVersion !== TERMS_VERSION) {
+    // Show consent modal in interactive mode
+    document.getElementById('consent-checkbox-wrapper').classList.remove('hidden');
+    document.getElementById('consent-checkbox').checked = false;
+    
+    const consentBtn = document.getElementById('consent-btn');
+    consentBtn.classList.remove('hidden');
+    consentBtn.disabled = true;
+    consentBtn.textContent = 'Agree and Enter';
+    
+    const closeBtn = document.getElementById('consent-close-btn');
+    if (closeBtn) closeBtn.classList.add('hidden');
+    
+    modal.classList.remove('hidden');
+    
+    // Fetch terms
+    fetchTermsOfService();
+  } else {
+    modal.classList.add('hidden');
+  }
+}
+
+// Toggle consent submit button
+function toggleConsentButton() {
+  const checkbox = document.getElementById('consent-checkbox');
+  const btn = document.getElementById('consent-btn');
+  btn.disabled = !checkbox.checked;
+}
+
+// Retrieve public IP and hash with SHA-256
+async function getHashedIP() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3-second timeout
+    
+    const response = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) throw new Error('IP service error');
+    const data = await response.json();
+    const ip = data.ip;
+    
+    // Hash IP address with SHA-256 using Crypto Web API
+    const msgBuffer = new TextEncoder().encode(ip);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (err) {
+    console.warn('Failed to retrieve or hash IP, using local fallback:', err);
+    return "fallback_hashed_ip_" + Math.random().toString(36).substring(2, 10);
+  }
+}
+
+// Handle consent submission action
+async function acceptConsent() {
+  const checkbox = document.getElementById('consent-checkbox');
+  if (!checkbox.checked) return;
+
+  const btn = document.getElementById('consent-btn');
+  btn.disabled = true;
+  btn.textContent = 'Registering Consent...';
+
+  // Generate UUID & timestamp
+  const uuid = generateUUID();
+  const timestamp = new Date().toISOString();
+  
+  // Retrieve hashed IP address
+  const hashedIP = await getHashedIP();
+
+  // Save to localStorage
+  localStorage.setItem('helpfind_consent_uuid', uuid);
+  localStorage.setItem('helpfind_consent_timestamp', timestamp);
+  localStorage.setItem('helpfind_consent_terms_version', TERMS_VERSION);
+
+  // Sync to backend ledger
+  const consentUrl = `${GOOGLE_SHEETS_API_URL}?action=consent&uuid=${uuid}&timestamp=${encodeURIComponent(timestamp)}&hashed_ip=${hashedIP}&terms_version=${encodeURIComponent(TERMS_VERSION)}`;
+  addToSyncQueue(consentUrl);
+
+  // Close overlay modal
+  document.getElementById('consent-modal').classList.add('hidden');
+  showToast('Consent registered. Welcome to HelpFind!');
+}
+
+// Trigger view-only Terms of Service from review submission component
+function showTermsModalFromForm(e) {
+  if (e) e.preventDefault();
+  
+  const modal = document.getElementById('consent-modal');
+  const container = document.getElementById('terms-text-container');
+  const loading = document.getElementById('terms-loading-indicator');
+  
+  // Hide interactive consent checkbox and buttons
+  document.getElementById('consent-checkbox-wrapper').classList.add('hidden');
+  document.getElementById('consent-btn').classList.add('hidden');
+  
+  // Create close button dynamically if missing
+  let closeBtn = document.getElementById('consent-close-btn');
+  if (!closeBtn) {
+    closeBtn = document.createElement('button');
+    closeBtn.id = 'consent-close-btn';
+    closeBtn.className = 'close-sheet-btn';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = closeTermsModal;
+    modal.querySelector('.consent-content').appendChild(closeBtn);
+  }
+  closeBtn.classList.remove('hidden');
+  
+  modal.classList.remove('hidden');
+  
+  // Render terms
+  if (termsTextCache) {
+    container.innerHTML = termsTextCache;
+    loading.classList.add('hidden');
+    container.classList.remove('hidden');
+  } else {
+    fetchTermsOfService();
+  }
+}
+
+function closeTermsModal() {
+  document.getElementById('consent-modal').classList.add('hidden');
+}
+
+// Recalculate client-side scores (punctuality, cost, rating) using local reviews database
+function recalculateAllVendorScores(vendors) {
+  const reviews = getReviews() || [];
+  vendors.forEach(v => {
+    const vendorReviews = reviews.filter(r => r.vendorId === v.id);
+    if (vendorReviews.length > 0) {
+      // Average rating
+      const avgRating = vendorReviews.reduce((sum, r) => sum + r.rating, 0) / vendorReviews.length;
+      v.rating = Math.round(avgRating * 10) / 10;
+      v.reviewCount = vendorReviews.length;
+      
+      // Punctuality Score
+      const onTimeCount = vendorReviews.filter(r => r.punctual).length;
+      v.punctualityScore = Math.round((onTimeCount / vendorReviews.length) * 100);
+      
+      // Min Job Cost
+      const costsList = vendorReviews.map(r => r.cost).filter(c => c !== undefined && c !== null);
+      if (costsList.length > 0) {
+        v.minJobCost = Math.min(...costsList);
+      }
+    } else {
+      v.punctualityScore = v.punctualityScore !== undefined ? v.punctualityScore : 100;
+      v.minJobCost = v.minJobCost !== undefined ? v.minJobCost : 50;
+    }
+  });
+  return vendors;
+}
+
+// Merge local vendors and server vendors to preserve unsynced local additions
+function mergeVendors(localVendors, serverVendors) {
+  const serverMap = new Map(serverVendors.map(v => [v.id, v]));
+  const merged = [];
+  
+  // Add all server vendors, merging with local details if they exist
+  serverVendors.forEach(sv => {
+    const lv = localVendors.find(v => v.id === sv.id);
+    if (lv) {
+      merged.push({
+        ...lv,
+        ...sv
+      });
+    } else {
+      merged.push(sv);
+    }
+  });
+  
+  // Add any local vendors that do not exist on the server yet (pending sync)
+  localVendors.forEach(lv => {
+    if (!serverMap.has(lv.id)) {
+      merged.push(lv);
+    }
+  });
+  
+  return merged;
+}
+
+// Sync latest provider directory from Google Sheets
+async function syncProvidersFromServer() {
+  if (!navigator.onLine) return;
+  
+  try {
+    const response = await fetch(`${GOOGLE_SHEETS_API_URL}?action=get_providers`);
+    if (!response.ok) throw new Error("Sync network response was not ok");
+    
+    const data = await response.json();
+    if (data.status === "success" && Array.isArray(data.providers)) {
+      if (data.providers.length > 0) {
+        // Get current local vendors before overwriting
+        const localVendors = getVendors() || [];
+        
+        // Merge server list with local list to preserve unsynced additions
+        const mergedList = mergeVendors(localVendors, data.providers);
+        
+        // Recalculate client-side fields using local reviews before saving
+        const updatedProviders = recalculateAllVendorScores(mergedList);
+        
+        // Save fresh Google Sheets records merged with local review calculations
+        localStorage.setItem("helpfind_vendors", JSON.stringify(updatedProviders));
+        console.log(`Successfully synced ${updatedProviders.length} providers from Google Sheets.`);
+        
+        // Refresh UI dynamically if currently viewing the directory
+        if (currentView === 'directory') {
+          filterDirectory();
+        }
+      }
+    } else {
+      console.warn("Apps Script returned error or empty providers list:", data.message);
+    }
+  } catch (err) {
+    console.warn("Could not sync providers from Google Sheets:", err);
   }
 }
