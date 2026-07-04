@@ -94,7 +94,13 @@
       pinInput.value = '9999';
       verifyCommunityPIN();
       
-      await wait(1000);
+      const verifyBtn = document.querySelector('#pin-modal .btn-primary');
+      let elapsedIncorrect = 0;
+      while (verifyBtn.disabled && elapsedIncorrect < 6000) {
+        await wait(200);
+        elapsedIncorrect += 200;
+      }
+      
       if (pinModal.classList.contains('hidden') || isPinVerified) {
         throw new Error("PIN modal closed or isPinVerified set to true with incorrect PIN");
       }
@@ -104,7 +110,11 @@
       pinInput.value = 'SCP2';
       verifyCommunityPIN();
       
-      await wait(1000);
+      let elapsedCorrect = 0;
+      while (!isPinVerified && elapsedCorrect < 6000) {
+        await wait(200);
+        elapsedCorrect += 200;
+      }
       
       // 6. Verify PIN modal is closed, and view has switched to add-review
       if (!pinModal.classList.contains('hidden')) {
