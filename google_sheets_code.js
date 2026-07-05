@@ -144,6 +144,25 @@ function handleRequest(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
+    if (params.action === "rate") {
+      if (params.pin !== CORRECT_PIN) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Unauthorized: Invalid Community PIN" }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      if (rowIdx === -1) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Provider ID not found" }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      var newRating = Number(params.rating);
+      var currentRating = Number(sheet.getRange(rowIdx, ratingCol + 1).getValue()) || 5;
+      var currentCount = Number(sheet.getRange(rowIdx, reviewsCol + 1).getValue()) || 1;
+      
+      var nextCount = currentCount + 1;
+      var nextRating = ((currentRating * currentCount) + newRating) / nextCount;
+      nextRating = Math.round(nextRating * 10) / 10;
+      
       sheet.getRange(rowIdx, ratingCol + 1).setValue(nextRating);
       sheet.getRange(rowIdx, reviewsCol + 1).setValue(nextCount);
       
