@@ -796,6 +796,23 @@ function initDatabase(forceReset = false) {
   }
   if (!localStorage.getItem("helpfind_reviews")) {
     localStorage.setItem("helpfind_reviews", JSON.stringify(DEFAULT_REVIEWS));
+  } else {
+    // Migration: Ensure synced property exists on all cached reviews
+    try {
+      const cachedReviews = JSON.parse(localStorage.getItem("helpfind_reviews"));
+      let updatedReviews = false;
+      cachedReviews.forEach(r => {
+        if (r.synced === undefined) {
+          r.synced = true;
+          updatedReviews = true;
+        }
+      });
+      if (updatedReviews) {
+        localStorage.setItem("helpfind_reviews", JSON.stringify(cachedReviews));
+      }
+    } catch (e) {
+      console.error("Failed to migrate reviews database:", e);
+    }
   }
   if (!localStorage.getItem("helpfind_leads")) {
     localStorage.setItem("helpfind_leads", JSON.stringify(DEFAULT_LEADS));

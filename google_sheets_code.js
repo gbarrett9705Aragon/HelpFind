@@ -115,31 +115,62 @@ function handleRequest(e) {
       }
       sheet.appendRow(newRow);
       
+      // Log individual review to Reviews sheet tab
+      var reviewsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Reviews");
+      if (!reviewsSheet) {
+        reviewsSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Reviews");
+        reviewsSheet.appendRow(["id", "vendorId", "authorName", "authorAddress", "authorResidentId", "date", "rating", "cost", "punctual", "honoredQuote", "proofOfService", "aiProofText", "comment"]);
+        reviewsSheet.getRange("A1:M1").setFontWeight("bold");
+        reviewsSheet.setFrozenRows(1);
+      }
+      
+      reviewsSheet.appendRow([
+        params.review_id || ("r_" + Date.now()),
+        params.id, // vendorId
+        params.authorName || "Verified Resident",
+        params.authorAddress || "Sun City Peachtree",
+        params.authorResidentId || "PIN-Verified",
+        params.date || new Date().toISOString().split('T')[0],
+        Number(params.rating || 5),
+        Number(params.cost || 50),
+        params.punctual === "true",
+        true, // honoredQuote
+        "N/A", // proofOfService
+        "Recommendation verified via community PIN entry.", // aiProofText
+        params.comment || ""
+      ]);
+      
       return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Provider registered successfully" }))
         .setMimeType(ContentService.MimeType.JSON);
     }
     
-    if (params.action === "rate") {
-      if (params.pin !== CORRECT_PIN) {
-        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Unauthorized: Invalid Community PIN" }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-
-      if (rowIdx === -1) {
-        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Provider ID not found" }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-      
-      var newRating = Number(params.rating);
-      var currentRating = Number(sheet.getRange(rowIdx, ratingCol + 1).getValue()) || 5;
-      var currentCount = Number(sheet.getRange(rowIdx, reviewsCol + 1).getValue()) || 1;
-      
-      var nextCount = currentCount + 1;
-      var nextRating = ((currentRating * currentCount) + newRating) / nextCount;
-      nextRating = Math.round(nextRating * 10) / 10;
-      
       sheet.getRange(rowIdx, ratingCol + 1).setValue(nextRating);
       sheet.getRange(rowIdx, reviewsCol + 1).setValue(nextCount);
+      
+      // Log individual review to Reviews sheet tab
+      var reviewsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Reviews");
+      if (!reviewsSheet) {
+        reviewsSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Reviews");
+        reviewsSheet.appendRow(["id", "vendorId", "authorName", "authorAddress", "authorResidentId", "date", "rating", "cost", "punctual", "honoredQuote", "proofOfService", "aiProofText", "comment"]);
+        reviewsSheet.getRange("A1:M1").setFontWeight("bold");
+        reviewsSheet.setFrozenRows(1);
+      }
+      
+      reviewsSheet.appendRow([
+        params.review_id || ("r_" + Date.now()),
+        params.id, // vendorId
+        params.authorName || "Verified Resident",
+        params.authorAddress || "Sun City Peachtree",
+        params.authorResidentId || "PIN-Verified",
+        params.date || new Date().toISOString().split('T')[0],
+        newRating,
+        Number(params.cost || 50),
+        params.punctual === "true",
+        true, // honoredQuote
+        "N/A", // proofOfService
+        "Recommendation verified via community PIN entry.", // aiProofText
+        params.comment || ""
+      ]);
       
       return ContentService.createTextOutput(JSON.stringify({ status: "success", rating: nextRating, reviewCount: nextCount }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -256,6 +287,59 @@ function handleRequest(e) {
       }
     }
     
+    if (params.action === "get_reviews") {
+      try {
+        var reviewsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Reviews");
+        var reviews = [];
+        if (reviewsSheet) {
+          var rData = reviewsSheet.getDataRange().getValues();
+          var rHeaders = rData[0];
+          
+          for (var r = 1; r < rData.length; r++) {
+            var row = rData[r];
+            var review = {};
+            var hasData = false;
+            
+            for (var col = 0; col < rHeaders.length; col++) {
+              var colName = String(rHeaders[col]).trim();
+              var val = row[col];
+              if (val !== undefined && val !== null && String(val).trim() !== "") {
+                hasData = true;
+              }
+              
+              if (colName === "id") review.id = String(val).trim();
+              else if (colName === "vendorId") review.vendorId = String(val).trim();
+              else if (colName === "authorName") review.authorName = String(val).trim();
+              else if (colName === "authorAddress") review.authorAddress = String(val).trim();
+              else if (colName === "authorResidentId") review.authorResidentId = String(val).trim();
+              else if (colName === "date") {
+                if (val instanceof Date) {
+                  review.date = val.toISOString().split('T')[0];
+                } else {
+                  review.date = String(val).trim();
+                }
+              }
+              else if (colName === "rating") review.rating = Number(val) || 5;
+              else if (colName === "cost") review.cost = Number(val) || 50;
+              else if (colName === "punctual") review.punctual = (val === true || String(val).toLowerCase() === "true");
+              else if (colName === "honoredQuote") review.honoredQuote = (val === true || String(val).toLowerCase() === "true");
+              else if (colName === "proofOfService") review.proofOfService = String(val).trim();
+              else if (colName === "aiProofText") review.aiProofText = String(val).trim();
+              else if (colName === "comment") review.comment = String(val).trim();
+            }
+            if (hasData && review.id) {
+              reviews.push(review);
+            }
+          }
+        }
+        return ContentService.createTextOutput(JSON.stringify({ status: "success", reviews: reviews }))
+          .setMimeType(ContentService.MimeType.JSON);
+      } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
     if (params.action === "verify_pin") {
       if (params.pin === CORRECT_PIN) {
         return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "PIN verified successfully" }))

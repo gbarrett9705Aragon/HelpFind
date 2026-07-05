@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('online', () => {
     processSyncQueue();
     syncProvidersFromServer();
+    syncReviewsFromServer();
   });
   window.addEventListener('offline', () => updateSyncStatus('offline'));
 
@@ -59,8 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check mandatory legal consent gate
   checkConsent();
 
-  // Sync contractor list from Google Sheet in background
+  // Sync contractor list and reviews from Google Sheet in background
   syncProvidersFromServer();
+  syncReviewsFromServer();
 });
 
 // Toast notification helper
@@ -515,10 +517,10 @@ function handleSubmitReview(e) {
   // Sync to Google Sheet Database in background
   const sessionPin = sessionStorage.getItem('helpfind_session_pin') || '';
   if (isNew) {
-    const addUrl = `${GOOGLE_SHEETS_API_URL}?action=add_provider&id=${vendorId}&name=${encodeURIComponent(newName)}&category=${encodeURIComponent(newCategory)}&service=${encodeURIComponent(newService)}&phone=${encodeURIComponent(newPhone)}&email=${encodeURIComponent(newEmail)}&rating=${rating}&pin=${encodeURIComponent(sessionPin)}`;
+    const addUrl = `${GOOGLE_SHEETS_API_URL}?action=add_provider&id=${vendorId}&name=${encodeURIComponent(newName)}&category=${encodeURIComponent(newCategory)}&service=${encodeURIComponent(newService)}&phone=${encodeURIComponent(newPhone)}&email=${encodeURIComponent(newEmail)}&rating=${rating}&comment=${encodeURIComponent(comment)}&cost=${cost}&punctual=${punctual}&review_id=${newReview.id}&pin=${encodeURIComponent(sessionPin)}`;
     addToSyncQueue(addUrl);
   } else {
-    const rateUrl = `${GOOGLE_SHEETS_API_URL}?action=rate&id=${vendorId}&rating=${rating}&pin=${encodeURIComponent(sessionPin)}`;
+    const rateUrl = `${GOOGLE_SHEETS_API_URL}?action=rate&id=${vendorId}&rating=${rating}&comment=${encodeURIComponent(comment)}&cost=${cost}&punctual=${punctual}&review_id=${newReview.id}&pin=${encodeURIComponent(sessionPin)}`;
     addToSyncQueue(rateUrl);
   }
 
@@ -666,9 +668,10 @@ async function processSyncQueue() {
   isProcessingQueue = false;
   updateSyncStatus('synced');
   console.log('Sync queue completely processed and empty.');
-
-  // Sync latest providers list after processing queue
+ 
+  // Sync latest providers and reviews list after processing queue
   syncProvidersFromServer();
+  syncReviewsFromServer();
 }
 
 // Dropdown Cascade Helpers
@@ -1025,5 +1028,65 @@ async function syncProvidersFromServer() {
     }
   } catch (err) {
     console.warn("Could not sync providers from Google Sheets:", err);
+  }
+}
+
+// Merge local reviews and server reviews to preserve unsynced local additions and handle deletions
+function mergeReviews(localReviews, serverReviews) {
+  const serverMap = new Map(serverReviews.map(r => [r.id, r]));
+  const merged = [];
+  
+  // Add all server reviews, setting synced = true
+  serverReviews.forEach(sr => {
+    const lr = localReviews.find(r => r.id === sr.id);
+    if (lr) {
+      merged.push({
+        ...lr,
+        ...sr,
+        synced: true
+      });
+    } else {
+      merged.push({
+        ...sr,
+        synced: true
+      });
+    }
+  });
+  
+  // Add local reviews not yet on server
+  localReviews.forEach(lr => {
+    if (!serverMap.has(lr.id)) {
+      if (lr.synced !== true) {
+        merged.push(lr);
+      }
+    }
+  });
+  
+  return merged;
+}
+
+// Sync latest reviews from Google Sheets
+async function syncReviewsFromServer() {
+  if (!navigator.onLine) return;
+  
+  try {
+    const response = await fetch(`${GOOGLE_SHEETS_API_URL}?action=get_reviews`);
+    if (!response.ok) throw new Error("Sync reviews response was not ok");
+    
+    const data = await response.json();
+    if (data.status === "success" && Array.isArray(data.reviews)) {
+      if (data.reviews.length > 0) {
+        const localReviews = getReviews() || [];
+        
+        // Merge server reviews with local reviews to preserve unsynced additions
+        const mergedList = mergeReviews(localReviews, data.reviews);
+        
+        // Save to localStorage
+        localStorage.setItem("helpfind_reviews", JSON.stringify(mergedList));
+        console.log(`Successfully synced ${mergedList.length} reviews from Google Sheets.`);
+      }
+    }
+  } catch (err) {
+    console.warn("Could not sync reviews from Google Sheets:", err);
   }
 }
