@@ -1,7 +1,7 @@
 // app.js - State Controller and Interaction Logic for HelpFind Sun City Peachtree
 
 // Google Sheets API Web App URL (Connects to HelpFindHomes.gsheet via Apps Script Web App)
-const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbw_B7bRQ2OEosLncFnf9imFAWwEW_44TCTQT0ixZQoERLIIuPusPAZyhH40jdqWi_7m/exec";
+const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzcknWnyO5imXP3rL-Mek72UzfM7ton3oq4r1LiAWaLDFOtmYQIphmtBbpQncAwqF_J/exec";
 
 // Global State
 let isPinVerified = !!sessionStorage.getItem('helpfind_session_pin'); // Cache PIN verification in current browser session

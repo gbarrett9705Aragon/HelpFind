@@ -23,7 +23,7 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 
 ## 🔑 Crucial Project Settings
 - **Community PIN**: `SCP2` (Required to recommend or add new contractors).
-- **API URL Connection**: The Apps Script URL must be pasted into the `GOOGLE_SHEETS_API_URL` variable at the top of `app.js` once deployed. Current deployed URL: `https://script.google.com/macros/s/AKfycbw_B7bRQ2OEosLncFnf9imFAWwEW_44TCTQT0ixZQoERLIIuPusPAZyhH40jdqWi_7m/exec`
+- **API URL Connection**: The Apps Script URL must be pasted into the `GOOGLE_SHEETS_API_URL` variable at the top of `app.js` once deployed. Current deployed URL: `https://script.google.com/macros/s/AKfycbzcknWnyO5imXP3rL-Mek72UzfM7ton3oq4r1LiAWaLDFOtmYQIphmtBbpQncAwqF_J/exec`
 - **Local Dev Port**: Running on `http://localhost:3000` via a background browser-sync task.
 
 ---
