@@ -1,0 +1,23 @@
+{
+  "name": "HelpFind Provider Portal",
+  "short_name": "ProviderPortal",
+  "description": "Dashboard and Knowledge Catalog for HelpFind Service Providers",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

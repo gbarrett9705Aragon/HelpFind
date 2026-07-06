@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProviderPortal - HelpFind</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Secure, mobile-responsive management portal for HelpFind service providers. Track conversion metrics and record service stories.">
+  <meta name="theme-color" content="#0f172a">
+  
+  <!-- Web App Manifest & Apple Web App Metas -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon.png">
+  
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Google Identity Services (OAuth Login) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+  <div id="app-container">
+    
+    <!-- Offline Banner -->
+    <div id="offline-notification" class="offline-banner">
+      ⚡ Offline Mode - Updates will be cached until you reconnect
+    </div>
+    
+    <!-- Main Header -->
+    <header>
+      <div class="brand">
+        <h1>HelpFind</h1>
+        <span class="badge-portal">Portal</span>
+      </div>
+      
+      <!-- User Info & Logout (Visible when logged in) -->
+      <div id="user-profile" class="user-info-row hidden">
+        <span id="user-email" class="user-email-tag" title="">provider@mail.com</span>
+        <button id="btn-logout" class="logout-btn">Log Out</button>
+      </div>
+    </header>
+    
+    <!-- 1. LOGIN SCREEN -->
+    <main id="screen-login" class="screen">
+      <div class="login-header">
+        <img src="icon.png" alt="HelpFind Provider Portal Logo" class="login-logo">
+        <h2>Provider Access Portal</h2>
+        <p class="subtitle">Secure back-end for HelpFind directory service providers</p>
+      </div>
+      
+      <div class="card login-form-card">
+        <h3>Sign In to Your Account</h3>
+        <p class="subtitle" style="font-size: 0.8rem; margin-top: -0.25rem;">
+          Use the Google account registered with your HelpFind directory profile.
+        </p>
+        
+        <!-- Google GIS Sign-In Button Wrapper -->
+        <div class="google-btn-container">
+          <div id="g_id_onload"
+               data-client_id="YOUR_GOOGLE_CLIENT_ID"
+               data-context="signin"
+               data-ux_mode="popup"
+               data-callback="handleCredentialResponse"
+               data-auto_select="false"
+               data-itp_support="true">
+          </div>
+          <div class="g_id_signin"
+               data-type="standard"
+               data-shape="rectangular"
+               data-theme="filled_blue"
+               data-text="signin_with"
+               data-size="large"
+               data-logo_alignment="left">
+          </div>
+        </div>
+        
+        <div class="divider">Or Test Using Demo Mode</div>
+        
+        <!-- Developer Demo Gate Bypass -->
+        <button id="trigger-demo-panel" class="demo-login-trigger">
+          Show Developer Demo Credentials
+        </button>
+        
+        <div id="demo-auth-panel" class="demo-panel">
+          <div class="form-group">
+            <label for="demo-email-select">Choose Demo Provider Account</label>
+            <select id="demo-email-select" class="input-select">
+              <option value="" disabled selected>-- Select an email to log in --</option>
+              <option value="transevesa@gmail.com">transevesa@gmail.com (Transevesa of Georgia, LLC)</option>
+              <option value="terencebrittain@att.net">terencebrittain@att.net (Terence Britain, Sr.)</option>
+              <option value="snowflowhvac@gmail.com">snowflowhvac@gmail.com (Snowflow Heating & Cooling LLC)</option>
+              <option value="isbd@comcast.net">isbd@comcast.net (Doug Gardner)</option>
+            </select>
+          </div>
+          
+          <button id="btn-demo-login" class="btn btn-primary" style="margin-top: 0.25rem;">
+            🔑 Log In with Demo Account
+          </button>
+        </div>
+        
+      </div>
+      
+      <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: auto; padding-bottom: 1rem;">
+        Need to register your business? Contact the Sun City Peachtree community directory administrator.
+      </div>
+    </main>
+    
+    <!-- 2. DASHBOARD SCREEN -->
+    <main id="screen-dashboard" class="screen hidden">
+      
+      <!-- Provider Info Card -->
+      <section class="card provider-profile-card">
+        <div class="provider-title-row">
+          <div>
+            <h2 id="profile-name">Business Name</h2>
+            <span id="profile-category" class="provider-meta-badge">Category &bull; Service</span>
+          </div>
+        </div>
+        <div class="provider-details-list">
+          <span>📞 Phone: <strong id="profile-phone">-</strong></span>
+          <span>✉️ Registered Email: <strong id="profile-email">-</strong></span>
+        </div>
+      </section>
+      
+      <!-- Core Analytics Metrics Row -->
+      <section class="metrics-grid">
+        <div class="metric-card full-width">
+          <span class="metric-label">Neighbor Engagement Metric</span>
+          <span id="metric-times-used" class="metric-value">0</span>
+          <span class="metric-subtext">Times neighbors clicked "I'll Use" (Hires & Leads generated)</span>
+        </div>
+        
+        <div class="metric-card">
+          <span class="metric-label">Average Rating</span>
+          <span id="metric-rating" class="metric-value">0.0</span>
+          <span class="metric-subtext">Based on verified reviews</span>
+        </div>
+        
+        <div class="metric-card">
+          <span class="metric-label">Total Reviews</span>
+          <span id="metric-reviews-count" class="metric-value">0</span>
+          <span class="metric-subtext">Submitted by neighbors</span>
+        </div>
+      </section>
+      
+      <!-- Knowledge Catalog Service Story Entry -->
+      <section class="card story-card">
+        <h3>Knowledge Catalog &bull; Service Story</h3>
+        <p class="subtitle" style="font-size: 0.8rem; margin-top: -0.25rem;">
+          Record a brief summary of the services, qualifications, or jobs you perform. Stories are displayed directly to neighbors.
+        </p>
+        
+        <div class="transcription-area-container">
+          <textarea id="story-textarea" class="transcription-textarea" placeholder="Speak your service story or type it here... (e.g. 'We recently installed high-efficiency HVAC units on Clover Lane...')"></textarea>
+        </div>
+        
+        <!-- Speech controls -->
+        <div class="voice-control-panel">
+          <button id="btn-mic" class="mic-btn" title="Click to record voice description" aria-label="Microphone Button">
+            🎤
+          </button>
+          
+          <span id="recording-status-text" class="recording-status">Tap microphone to dictate story</span>
+          
+          <!-- Audio visualizer simulation waves -->
+          <div id="audio-visualizer" class="audio-waves-container">
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+          </div>
+        </div>
+        
+        <div class="btn-row">
+          <button id="btn-polish-story" class="btn btn-secondary" disabled>
+            ✨ Polish Transcript
+          </button>
+          <button id="btn-save-story" class="btn btn-primary" disabled>
+            💾 Save to Sheet
+          </button>
+        </div>
+      </section>
+      
+      <!-- Neighbor Reviews List -->
+      <section class="reviews-section">
+        <h3>Neighborhood Recommendations History</h3>
+        <div id="reviews-list-container" class="reviews-container">
+          <!-- Reviews list will be dynamically populated -->
+        </div>
+      </section>
+      
+    </main>
+    
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-mask" class="loading-overlay hidden">
+      <div class="spinner"></div>
+      <span style="font-size: 0.85rem; font-weight: 500;" id="loading-text">Loading directory...</span>
+    </div>
+    
+  </div>
+
+  <script src="app.js"></script>
+  <script src="test_provider_portal.js"></script>
+</body>
+</html>
