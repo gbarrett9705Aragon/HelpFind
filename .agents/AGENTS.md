@@ -63,6 +63,7 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Standardized sub-sheet references to explicitly load `"ProviderList"` and `"AuditLedger"` by name, avoiding errors when users view logs.
 - [x] Propagated spreadsheet deletions to client devices by tracking a client-side `synced` state flag on local vendor data.
 - [x] Implemented shared reviews database syncing, dynamically generating and syncing a `"Reviews"` sheet tab for community-wide review comment discovery.
+- [x] Built and deployed the ProviderPortal PWA under `/ProviderPortal` with local automated integration test suite (`test_provider_portal.js`), Google/Demo Auth, and Speech-to-Text with AI-polishing.
 
 ---
 
