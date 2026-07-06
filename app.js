@@ -117,12 +117,6 @@ function handleProviderDropdownChange() {
   
   if (val === 'choose') return;
   
-  if (val === 'provider-login') {
-    window.location.href = './ProviderPortal/';
-    selectNav.value = 'choose';
-    return;
-  }
-  
   actionPending = val;
   
   if (isPinVerified) {
