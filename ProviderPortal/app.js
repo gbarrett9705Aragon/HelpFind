@@ -1,6 +1,6 @@
 // app.js - State Controller and Interaction Logic for ProviderPortal PWA
 
-// Google Sheets API Web App URL (Shared with HelpFind core application)
+// Google Sheets API Web App URL (Dedicated ProviderPortal backend Apps Script)
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwUDg5GkL6Dd9zbgG2KjnvBMvecrjQ8s3v_VMq2_7RK6EnfZt7WUn391EDpEU7M0xnZ/exec";
 
 // Global App State
@@ -8,7 +8,6 @@ let currentUser = null; // Stores authenticated provider object
 let currentReviews = []; // Reviews for this specific provider
 let isRecording = false;
 let recognition = null;
-let idTokenSession = null; // Stores Google OAuth token if logged in via Google
 
 // DOM Elements
 const screenLogin = document.getElementById('screen-login');
@@ -76,6 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSaveStory.disabled = !hasText;
   });
 
+  // Set up login form submit listener
+  document.getElementById('form-login').addEventListener('submit', handlePasswordLogin);
+  
+  // Set up change password form submit listener
+  document.getElementById('form-change-password').addEventListener('submit', handleChangePassword);
+
   // 4. Initialize Speech Recognition
   initSpeechRecognition();
 
@@ -137,13 +142,11 @@ function toggleDemoPanel() {
 function restoreCachedSession() {
   const savedUser = sessionStorage.getItem('provider_user');
   const savedReviews = sessionStorage.getItem('provider_reviews');
-  const savedToken = sessionStorage.getItem('provider_oauth_token');
   
   if (savedUser) {
     try {
       currentUser = JSON.parse(savedUser);
       currentReviews = savedReviews ? JSON.parse(savedReviews) : [];
-      idTokenSession = savedToken || null;
       renderDashboard();
     } catch (e) {
       console.error('Failed to parse cached session:', e);
@@ -156,11 +159,10 @@ function restoreCachedSession() {
 function handleLogout() {
   currentUser = null;
   currentReviews = [];
-  idTokenSession = null;
   
   sessionStorage.removeItem('provider_user');
   sessionStorage.removeItem('provider_reviews');
-  sessionStorage.removeItem('provider_oauth_token');
+  sessionStorage.removeItem('provider_password');
   
   // Clear layout fields
   storyTextarea.value = '';
@@ -175,16 +177,68 @@ function handleLogout() {
   showToast('Logged out successfully.');
 }
 
-// Authenticates backend API request using Google OAuth Token or Demo Email
-async function fetchProviderProfile(email, idToken = null) {
-  let url = '';
-  if (idToken) {
-    url = `${GOOGLE_SHEETS_API_URL}?action=get_provider_by_token&id_token=${encodeURIComponent(idToken)}`;
-  } else {
-    url = `${GOOGLE_SHEETS_API_URL}?action=get_provider_by_email_demo&email=${encodeURIComponent(email)}`;
-  }
+// --- AUTHENTICATION FLOWS ---
 
+// 1. Password Authentication Login Form
+async function handlePasswordLogin(e) {
+  if (e) e.preventDefault();
+  
+  const usernameInput = document.getElementById('login-username');
+  const passwordInput = document.getElementById('login-password');
+  
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  
+  if (!username || !password) {
+    showToast("Please enter both username and password.", true);
+    return;
+  }
+  
+  showLoading("Logging in...");
+  
+  const url = `${GOOGLE_SHEETS_API_URL}?action=login_provider&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Could not connect to database backend");
+    
+    const data = await response.json();
+    if (data.status === "success" && data.provider) {
+      currentUser = data.provider;
+      currentReviews = data.reviews || [];
+      
+      // Cache session in browser tab
+      sessionStorage.setItem('provider_user', JSON.stringify(currentUser));
+      sessionStorage.setItem('provider_reviews', JSON.stringify(currentReviews));
+      sessionStorage.setItem('provider_password', password); // Cache plain password for operations
+      
+      // Clear login inputs
+      usernameInput.value = '';
+      passwordInput.value = '';
+      
+      renderDashboard();
+      showToast(`Welcome back, ${currentUser.name}!`);
+    } else {
+      throw new Error(data.message || "Invalid username or password");
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    showToast(error.message || "Login failed. Please try again.", true);
+  } finally {
+    hideLoading();
+  }
+}
+
+// 2. Developer Demo Bypass Login
+async function handleDemoLogin() {
+  const selectedEmail = demoEmailSelect.value;
+  if (!selectedEmail) {
+    showToast("Please choose an account from the dropdown list.", true);
+    return;
+  }
+  
   showLoading("Fetching provider profile...");
+  const url = `${GOOGLE_SHEETS_API_URL}?action=get_provider_by_email_demo&email=${encodeURIComponent(selectedEmail)}`;
 
   try {
     const response = await fetch(url);
@@ -194,64 +248,82 @@ async function fetchProviderProfile(email, idToken = null) {
     if (data.status === "success" && data.provider) {
       currentUser = data.provider;
       currentReviews = data.reviews || [];
-      idTokenSession = idToken;
+      const password = currentUser.password || ""; // Grab actual password
 
       // Cache session in browser tab
       sessionStorage.setItem('provider_user', JSON.stringify(currentUser));
       sessionStorage.setItem('provider_reviews', JSON.stringify(currentReviews));
-      if (idToken) {
-        sessionStorage.setItem('provider_oauth_token', idToken);
-      }
+      sessionStorage.setItem('provider_password', password);
 
       renderDashboard();
-      showToast(`Welcome back, ${currentUser.name}!`);
+      showToast(`Welcome back, ${currentUser.name}! (Demo Mode)`);
     } else {
       throw new Error(data.message || "Failed to retrieve provider record");
     }
   } catch (error) {
-    console.error("Login fetch error:", error);
-    showToast(error.message || "Login failed. Verify email and connection.", true);
+    console.error("Demo login error:", error);
+    showToast(error.message || "Demo login failed. Verify connection.", true);
   } finally {
     hideLoading();
   }
 }
 
-// --- AUTHENTICATION FLOWS ---
-
-// 1. Google OAuth Token Callback
-window.handleCredentialResponse = (response) => {
-  // The credential returned is the Google ID Token (JWT)
-  const token = response.credential;
-  if (!token) {
-    showToast("Google sign in failed", true);
+// 3. Change Password Form Submission
+async function handleChangePassword(e) {
+  if (e) e.preventDefault();
+  
+  const currentPasswordInput = document.getElementById('chg-current-password');
+  const newPasswordInput = document.getElementById('chg-new-password');
+  const confirmPasswordInput = document.getElementById('chg-confirm-password');
+  
+  const currentPassword = currentPasswordInput.value.trim();
+  const newPassword = newPasswordInput.value.trim();
+  const confirmPassword = confirmPasswordInput.value.trim();
+  
+  if (newPassword !== confirmPassword) {
+    showToast("New passwords do not match.", true);
     return;
   }
   
-  // Parse JWT locally to display loading email before backend verification
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    const parsedToken = JSON.parse(jsonPayload);
-    
-    console.log("Authenticated OAuth Email:", parsedToken.email);
-    fetchProviderProfile(parsedToken.email, token);
-  } catch (e) {
-    console.error("JWT decoding failed locally:", e);
-    fetchProviderProfile("", token);
-  }
-};
-
-// 2. Developer Demo Bypass Login
-function handleDemoLogin() {
-  const selectedEmail = demoEmailSelect.value;
-  if (!selectedEmail) {
-    showToast("Please choose an account from the dropdown list.", true);
+  // Use email or phone as the unique username
+  const username = currentUser.email || currentUser.phone;
+  if (!username) {
+    showToast("Session expired. Please log in again.", true);
+    handleLogout();
     return;
   }
-  fetchProviderProfile(selectedEmail, null);
+  
+  showLoading("Updating password...");
+  
+  const url = `${GOOGLE_SHEETS_API_URL}?action=change_password` +
+    `&username=${encodeURIComponent(username)}` +
+    `&current_password=${encodeURIComponent(currentPassword)}` +
+    `&new_password=${encodeURIComponent(newPassword)}`;
+    
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Could not connect to database backend");
+    
+    const data = await response.json();
+    if (data.status === "success") {
+      // Update cached password
+      sessionStorage.setItem('provider_password', newPassword);
+      
+      // Clear input fields
+      currentPasswordInput.value = '';
+      newPasswordInput.value = '';
+      confirmPasswordInput.value = '';
+      
+      showToast("Password updated successfully!");
+    } else {
+      throw new Error(data.message || "Failed to update password");
+    }
+  } catch (error) {
+    console.error("Change password error:", error);
+    showToast(error.message || "Error updating password. Try again.", true);
+  } finally {
+    hideLoading();
+  }
 }
 
 // --- DASHBOARD RENDERING ---
@@ -261,16 +333,17 @@ function renderDashboard() {
   screenLogin.classList.add('hidden');
   screenDashboard.classList.remove('hidden');
   
-  // User info header details
-  userEmailText.textContent = currentUser.email;
-  userEmailText.title = currentUser.email;
+  // User info header details (handles case when email is not present)
+  const displayIdentifier = currentUser.email || currentUser.phone || currentUser.name;
+  userEmailText.textContent = displayIdentifier;
+  userEmailText.title = displayIdentifier;
   userProfile.classList.remove('hidden');
 
   // Business profile card info
   profileName.textContent = currentUser.name;
   profileCategory.textContent = `${currentUser.category} • ${currentUser.service || "General"}`;
   profilePhone.textContent = currentUser.phone || "No phone listed";
-  profileEmail.textContent = currentUser.email;
+  profileEmail.textContent = currentUser.email || "No email listed";
 
   // Analytics Metrics values
   metricTimesUsed.textContent = currentUser.timesUsed || "0";
@@ -434,18 +507,11 @@ async function saveOrPolishStory(shouldPolish = false) {
     stopRecording();
   }
 
-  let action = '';
-  let params = `story=${encodeURIComponent(storyText)}&polish=${shouldPolish}`;
+  const password = sessionStorage.getItem('provider_password') || '';
+  const username = currentUser.email || currentUser.phone;
 
-  if (idTokenSession) {
-    // Authenticated via Google
-    action = 'update_service_story';
-    params += `&id_token=${encodeURIComponent(idTokenSession)}`;
-  } else {
-    // Authenticated via Demo Mode
-    action = 'update_service_story_demo';
-    params += `&email=${encodeURIComponent(currentUser.email)}`;
-  }
+  let action = 'update_service_story';
+  let params = `story=${encodeURIComponent(storyText)}&polish=${shouldPolish}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
 
   showLoading(shouldPolish ? "Polishing story with AI..." : "Saving story to Google Sheet...");
 
