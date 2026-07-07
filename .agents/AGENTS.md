@@ -63,16 +63,18 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Standardized sub-sheet references to explicitly load `"ProviderList"` and `"AuditLedger"` by name, avoiding errors when users view logs.
 - [x] Propagated spreadsheet deletions to client devices by tracking a client-side `synced` state flag on local vendor data.
 - [x] Implemented shared reviews database syncing, dynamically generating and syncing a `"Reviews"` sheet tab for community-wide review comment discovery.
-- [x] Built and deployed the ProviderPortal PWA under `/ProviderPortal` with local automated integration test suite (`test_provider_portal.js`), Google/Demo Auth, and Speech-to-Text with AI-polishing.
+- [x] Built and deployed the ProviderPortal PWA under `/ProviderPortal` with local automated integration test suite (`test_provider_portal.js`), Email/Phone & Password authentication, a Change Password form, and Speech-to-Text with AI-polishing.
 
 ---
 
 ## 🏁 Handover Notes & Next Steps
 1. **Current Operating State**: 
-   * The app is **100% live** at `https://help-find.vercel.app` (fully synced with repository commits).
+   * The main app is **100% live** at `https://help-find.vercel.app`.
+   * The **ProviderPortal PWA** is **100% live** at `https://help-find.vercel.app/ProviderPortal/` (requiring hard refresh `Ctrl + F5` if cached).
    * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to Vercel.
    * New registrations, rating changes, and hire counts automatically update both the browser cache and append/increment rows in `ProviderList` spreadsheet in real-time.
    * Device UUID consent signatures and timestamps are appended automatically to the `AuditLedger` tab.
+   * ProviderPortal login works using registered **Email** or **Phone Number** combined with the `Password` column in `ProviderList` (initial default passwords are auto-populated as digits of the phone number, e.g., `6127599083` for Barrett AI Consulting).
 2. **Next Steps for Next Session**:
    * Introduce resident-facing search enhancements (e.g. searching review text comments or sorting by punctuality).
    * Incorporate contractor photo uploads via Apps Script base64 sync.
