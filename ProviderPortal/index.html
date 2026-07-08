@@ -214,6 +214,40 @@
       
     </main>
     
+    <!-- Verification Overlay (For Pending listings) -->
+    <div id="verification-overlay" class="verification-overlay hidden">
+      <div class="verification-content">
+        <div class="verification-header">
+          <div class="verification-badge">✨ Claim Your Listing</div>
+          <h2>Welcome to HelpFind!</h2>
+          <p class="subtitle" style="margin-top: 0.5rem;">
+            A resident has recommended your business. Please verify your listing and set your password to activate it in the resident directory.
+          </p>
+        </div>
+        
+        <div class="card verification-card">
+          <form id="form-verify-listing" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div class="form-group">
+              <label for="verify-new-password">Choose a Secure Password</label>
+              <input type="password" id="verify-new-password" class="input-select" placeholder="Enter new password" required style="cursor: text;">
+            </div>
+            <div class="form-group">
+              <label for="verify-confirm-password">Confirm Password</label>
+              <input type="password" id="verify-confirm-password" class="input-select" placeholder="Confirm new password" required style="cursor: text;">
+            </div>
+            
+            <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; margin-top: 0.25rem;">
+              🔒 By clicking "Verify & Activate", your business profile will immediately become visible to residents in the HelpFind directory.
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem; width: 100%;">
+              ✅ Verify & Activate Listing
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Notification Container -->
     <div id="toast-container"></div>
     

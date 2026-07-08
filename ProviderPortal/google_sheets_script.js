@@ -17,6 +17,10 @@
 
 var CORRECT_PIN = "SCP2";
 
+// PROVIDER PORTAL CONFIGURATION
+// Change this to the actual URL where your ProviderPortal PWA is hosted.
+var PROVIDER_PORTAL_URL = "https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/";
+
 function doGet(e) {
   return handleRequest(e);
 }
@@ -82,6 +86,17 @@ function handleRequest(e) {
       passwordCol = headersRow.indexOf("password");
     }
 
+    // Dynamic column insertion for status if missing
+    var statusCol = headersRow.indexOf("status");
+    if (statusCol === -1) {
+      sheet.insertColumnAfter(rawHeaders.length);
+      sheet.getRange(1, rawHeaders.length + 1).setValue("Status");
+      data = sheet.getDataRange().getValues();
+      rawHeaders = data[0];
+      headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
+      statusCol = headersRow.indexOf("status");
+    }
+
     // Dynamic column insertion for service stories if missing
     var serviceStoriesCol = headersRow.indexOf("service stories");
     if (serviceStoriesCol === -1) serviceStoriesCol = headersRow.indexOf("service_stories");
@@ -97,7 +112,7 @@ function handleRequest(e) {
 
     if (idCol === -1) idCol = 0;
 
-    // Auto-populate passwords for rows that are blank
+    // Auto-populate passwords and status for rows that are blank
     var initializedAny = false;
     for (var r = 1; r < data.length; r++) {
       var rowVal = data[r];
@@ -112,6 +127,12 @@ function handleRequest(e) {
           defaultPassword = "SCP" + (r + 1);
         }
         sheet.getRange(r + 1, passwordCol + 1).setValue(defaultPassword);
+        initializedAny = true;
+      }
+
+      var currentStatus = statusCol !== -1 ? String(rowVal[statusCol] || "").trim() : "";
+      if (!currentStatus && statusCol !== -1) {
+        sheet.getRange(r + 1, statusCol + 1).setValue("Verified");
         initializedAny = true;
       }
     }
@@ -189,6 +210,11 @@ function handleRequest(e) {
 
       // Write new password
       sheet.getRange(providerRowIdx, passwordCol + 1).setValue(newPassword);
+
+      // Update status to Verified
+      if (statusCol !== -1) {
+        sheet.getRange(providerRowIdx, statusCol + 1).setValue("Verified");
+      }
 
       return createJSONResponse({ 
         status: "success", 
@@ -290,6 +316,15 @@ function handleRequest(e) {
         return createJSONResponse({ status: "error", message: "Provider ID already exists" });
       }
       
+      // Generate temporary password
+      var tempPassword = "";
+      var cleanPhone = (params.phone || "").replace(/\D/g, "");
+      if (cleanPhone.length >= 7) {
+        tempPassword = cleanPhone;
+      } else {
+        tempPassword = "SCP" + (sheet.getLastRow() + 1);
+      }
+
       // Append a new provider row matching columns dynamically
       var newRow = [];
       for (var col = 0; col < headersRow.length; col++) {
@@ -304,10 +339,35 @@ function handleRequest(e) {
         else if (colName === "reviewcount") newRow.push(1);
         else if (colName === "times_used" || colName === "timesused") newRow.push(1);
         else if (colName === "service stories" || colName === "service_stories" || colName === "servicestories") newRow.push("");
+        else if (colName === "password") newRow.push(tempPassword);
+        else if (colName === "status") newRow.push("Pending");
         else newRow.push("");
       }
       sheet.appendRow(newRow);
       
+      // Send verification email to the new provider
+      if (params.email) {
+        try {
+          var portalUrl = PROVIDER_PORTAL_URL || "YOUR_PROVIDER_PORTAL_URL_HERE";
+          var subject = "Action Required: Verify your business listing on HelpFind";
+          var body = "Hello " + params.name + ",\n\n" +
+                     "A resident of the Sun City Peachtree community has suggested adding your business (" + params.name + ") to the HelpFind local service directory.\n\n" +
+                     "To verify that you wish to be listed in our directory and allow residents to see your recommendations, please log in to our Provider Access Portal to claim your listing:\n\n" +
+                     "Portal Link: " + portalUrl + "\n" +
+                     "Username (Your Email): " + params.email + "\n" +
+                     "Temporary Password: " + tempPassword + "\n\n" +
+                     "Once you log in, you will be prompted to verify your listing and choose a secure password. You will also be able to write a service story describing your business.\n\n" +
+                     "Thank you,\n" +
+                     "HelpFind Directory Administrator";
+          
+          MailApp.sendEmail(params.email, subject, body, {
+            name: "HelpFind Directory Administrator"
+          });
+        } catch (e) {
+          console.error("Failed to send email: " + e.toString());
+        }
+      }
+
       // Log individual review to Reviews sheet tab
       logReviewToSheet(params, providerId);
       
@@ -393,9 +453,11 @@ function handleRequest(e) {
             else if (colName === "reviewcount") provider.reviewCount = Number(val) || 1;
             else if (colName === "times_used" || colName === "timesused") provider.timesUsed = Number(val) || 0;
             else if (colName === "service stories" || colName === "service_stories" || colName === "servicestories") provider.serviceStories = String(val).trim();
+            else if (colName === "status") provider.status = String(val).trim();
           }
           
           if (!hasData || !provider.id) continue;
+          if (provider.status === "Pending") continue;
           
           provider.isPremium = false;
           provider.hasLeadsPlan = false;
@@ -485,6 +547,7 @@ function getProviderDataFromRow(sheet, data, rowIdx, headersRow, idCol, emailCol
     else if (colName === "times_used" || colName === "timesused") provider.timesUsed = Number(val) || 0;
     else if (colName === "service stories" || colName === "service_stories" || colName === "servicestories") provider.serviceStories = String(val).trim();
     else if (colName === "password") provider.password = String(val).trim();
+    else if (colName === "status") provider.status = String(val).trim();
   }
   
   if (!provider.id) {
@@ -643,3 +706,19 @@ function polishStoryWithGemini(story, apiKey) {
   }
   return story;
 }
+
+/**
+ * Run this function manually in the Google Apps Script editor to trigger 
+ * the authorization prompt and grant permission to send emails.
+ */
+function testEmailPermission() {
+  Logger.log("Testing email permission...");
+  var email = Session.getActiveUser().getEmail();
+  try {
+    MailApp.sendEmail(email, "HelpFind Permission Test", "This email confirms that the HelpFind script has authorization to send emails on your behalf.");
+    Logger.log("SUCCESS: Test email sent to " + email);
+  } catch (e) {
+    Logger.log("ERROR: Failed to send email: " + e.toString());
+  }
+}
+

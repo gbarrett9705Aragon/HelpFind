@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Set up form submission handler
   document.getElementById('form-add-review').addEventListener('submit', handleSubmitReview);
+
+  // Auto-format phone input dynamically as user types digits
+  const phoneInput = document.getElementById('new-vendor-phone');
+  if (phoneInput) {
+    phoneInput.addEventListener('input', handlePhoneInput);
+  }
   
   // Set up click handlers on stars
   setStarRating(1); // Default to 1 star on form init
@@ -391,17 +397,20 @@ function toggleNewVendorFields() {
   const nameInput = document.getElementById('new-vendor-name');
   const phoneInput = document.getElementById('new-vendor-phone');
   const serviceInput = document.getElementById('new-vendor-service');
+  const emailInput = document.getElementById('new-vendor-email');
 
   if (select.value === 'new-vendor') {
     fields.classList.remove('hidden');
     nameInput.required = true;
     phoneInput.required = true;
     serviceInput.required = true;
+    emailInput.required = true;
   } else {
     fields.classList.add('hidden');
     nameInput.required = false;
     phoneInput.required = false;
     serviceInput.required = false;
+    emailInput.required = false;
   }
 }
 
@@ -436,10 +445,10 @@ function handleSubmitReview(e) {
     newService = document.getElementById('new-vendor-service').value;
     newPhone = document.getElementById('new-vendor-phone').value.trim();
     const emailInput = document.getElementById('new-vendor-email').value.trim();
-    newEmail = emailInput || `contact@${newName.toLowerCase().replace(/\s+/g, '')}.com`;
+    newEmail = emailInput;
 
-    if (!newName || !newCategory || !newService || !newPhone) {
-      showToast('Please fill out all contractor details including service type.', true);
+    if (!newName || !newCategory || !newService || !newPhone || !newEmail) {
+      showToast('Please fill out all contractor details including a valid email address.', true);
       return;
     }
 
@@ -533,10 +542,36 @@ function handleSubmitReview(e) {
   document.getElementById('new-vendor-name').required = false;
   document.getElementById('new-vendor-phone').required = false;
   document.getElementById('new-vendor-service').required = false;
+  document.getElementById('new-vendor-email').required = false;
   document.getElementById('new-vendor-service').disabled = true;
 
-  showToast('Your Review Rating for this Provider has been Successfully Entered');
+  if (isNew) {
+    showToast('New provider registered successfully! An onboarding email has been sent.');
+  } else {
+    showToast('Your Review Rating for this Provider has been Successfully Entered');
+  }
   switchView('directory');
+}
+
+// Auto-formats raw digits input into standard US phone format: (XXX) XXX-XXXX
+function handlePhoneInput(e) {
+  const input = e.target;
+  let clean = input.value.replace(/\D/g, '');
+  if (clean.length > 10) {
+    clean = clean.substring(0, 10);
+  }
+  
+  let formatted = '';
+  if (clean.length > 0) {
+    if (clean.length <= 3) {
+      formatted = '(' + clean;
+    } else if (clean.length <= 6) {
+      formatted = '(' + clean.substring(0, 3) + ') ' + clean.substring(3);
+    } else {
+      formatted = '(' + clean.substring(0, 3) + ') ' + clean.substring(3, 6) + '-' + clean.substring(6);
+    }
+  }
+  input.value = formatted;
 }
 
 // Vendor Details Modal (Bottom-Sheet content injector)

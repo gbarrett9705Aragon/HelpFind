@@ -115,6 +115,18 @@ function handleRequest(e) {
       passwordCol = headersRow.indexOf("password");
     }
 
+    // Dynamic column insertion for status if missing
+    var statusCol = headersRow.indexOf("status");
+    if (statusCol === -1) {
+      sheet.insertColumnAfter(rawHeaders.length);
+      sheet.getRange(1, rawHeaders.length + 1).setValue("Status");
+      // Re-fetch data
+      data = sheet.getDataRange().getValues();
+      rawHeaders = data[0];
+      headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
+      statusCol = headersRow.indexOf("status");
+    }
+
     // Dynamic column insertion for service stories if missing
     var serviceStoriesCol = headersRow.indexOf("service stories");
     if (serviceStoriesCol === -1) serviceStoriesCol = headersRow.indexOf("service_stories");
@@ -131,7 +143,7 @@ function handleRequest(e) {
 
     if (idCol === -1) idCol = 0;
 
-    // Auto-populate passwords for rows that are blank
+    // Auto-populate passwords and status for rows that are blank
     var initializedAny = false;
     for (var r = 1; r < data.length; r++) {
       var rowVal = data[r];
@@ -146,6 +158,12 @@ function handleRequest(e) {
           defaultPassword = "SCP" + (r + 1);
         }
         sheet.getRange(r + 1, passwordCol + 1).setValue(defaultPassword);
+        initializedAny = true;
+      }
+
+      var currentStatus = statusCol !== -1 ? String(rowVal[statusCol] || "").trim() : "";
+      if (!currentStatus && statusCol !== -1) {
+        sheet.getRange(r + 1, statusCol + 1).setValue("Verified");
         initializedAny = true;
       }
     }
@@ -225,6 +243,11 @@ function handleRequest(e) {
 
       // Write new password
       sheet.getRange(providerRowIdx, passwordCol + 1).setValue(newPassword);
+
+      // Update status to Verified
+      if (statusCol !== -1) {
+        sheet.getRange(providerRowIdx, statusCol + 1).setValue("Verified");
+      }
 
       return createJSONResponse({ 
         status: "success", 
@@ -359,6 +382,7 @@ function getProviderDataFromRow(sheet, data, rowIdx, headersRow, idCol, emailCol
     else if (colName === "times_used" || colName === "timesused") provider.timesUsed = Number(val) || 0;
     else if (colName === "service stories" || colName === "service_stories" || colName === "servicestories") provider.serviceStories = String(val).trim();
     else if (colName === "password") provider.password = String(val).trim();
+    else if (colName === "status") provider.status = String(val).trim();
   }
   
   // Dynamic ID generation

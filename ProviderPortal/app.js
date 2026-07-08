@@ -81,6 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set up change password form submit listener
   document.getElementById('form-change-password').addEventListener('submit', handleChangePassword);
 
+  // Set up verification form submit listener
+  document.getElementById('form-verify-listing').addEventListener('submit', handleVerifyListing);
+
   // 4. Initialize Speech Recognition
   initSpeechRecognition();
 
@@ -326,9 +329,83 @@ async function handleChangePassword(e) {
   }
 }
 
+// Verification Form Submission
+async function handleVerifyListing(e) {
+  if (e) e.preventDefault();
+  
+  const newPasswordInput = document.getElementById('verify-new-password');
+  const confirmPasswordInput = document.getElementById('verify-confirm-password');
+  
+  const newPassword = newPasswordInput.value.trim();
+  const confirmPassword = confirmPasswordInput.value.trim();
+  
+  if (newPassword !== confirmPassword) {
+    showToast("New passwords do not match.", true);
+    return;
+  }
+  
+  const currentPassword = sessionStorage.getItem('provider_password') || '';
+  const username = currentUser.email || currentUser.phone;
+  
+  if (!username) {
+    showToast("Session expired. Please log in again.", true);
+    handleLogout();
+    return;
+  }
+  
+  showLoading("Activating listing...");
+  
+  const url = `${GOOGLE_SHEETS_API_URL}?action=change_password` +
+    `&username=${encodeURIComponent(username)}` +
+    `&current_password=${encodeURIComponent(currentPassword)}` +
+    `&new_password=${encodeURIComponent(newPassword)}`;
+    
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Could not connect to database backend");
+    
+    const data = await response.json();
+    if (data.status === "success") {
+      // Update cached password
+      sessionStorage.setItem('provider_password', newPassword);
+      
+      // Update user state to Verified
+      currentUser.status = "Verified";
+      sessionStorage.setItem('provider_user', JSON.stringify(currentUser));
+      
+      // Clear inputs
+      newPasswordInput.value = '';
+      confirmPasswordInput.value = '';
+      
+      // Hide verification overlay and refresh UI
+      document.getElementById('verification-overlay').classList.add('hidden');
+      renderDashboard();
+      
+      showToast("Verification successful! Your listing is now active and visible to residents.");
+    } else {
+      throw new Error(data.message || "Failed to verify listing");
+    }
+  } catch (error) {
+    console.error("Verification error:", error);
+    showToast(error.message || "Error verifying listing. Try again.", true);
+  } finally {
+    hideLoading();
+  }
+}
+
 // --- DASHBOARD RENDERING ---
 
 function renderDashboard() {
+  // Check if provider is pending verification
+  const isPending = currentUser.status === "Pending";
+  const verificationOverlay = document.getElementById('verification-overlay');
+  
+  if (isPending) {
+    verificationOverlay.classList.remove('hidden');
+  } else {
+    verificationOverlay.classList.add('hidden');
+  }
+
   // Switch view screen toggles
   screenLogin.classList.add('hidden');
   screenDashboard.classList.remove('hidden');

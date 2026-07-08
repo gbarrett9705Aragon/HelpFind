@@ -43,6 +43,7 @@
       window.fetch = async function(url, options) {
         if (url.includes('action=login_provider')) {
           logToRunner("Intercepted login_provider fetch for testing...");
+          const isPendingTest = url.includes('username=pending%40gmail.com');
           return new Response(JSON.stringify({
             status: "success",
             provider: {
@@ -51,12 +52,13 @@
               category: "General Maintenance",
               service: "Electricians",
               phone: "404-668-4065",
-              email: "transevesa@gmail.com",
+              email: isPendingTest ? "pending@gmail.com" : "transevesa@gmail.com",
               rating: 5.0,
               reviewCount: 1,
               timesUsed: 12,
               serviceStories: "We offer professional electrician services including panel upgrades and outdoor floodlights.",
-              password: "mypassword"
+              password: "mypassword",
+              status: isPendingTest ? "Pending" : "Verified"
             },
             reviews: [
               {
@@ -245,6 +247,51 @@
         throw new Error("Story transcript polishing response did not update textarea");
       }
       logToRunner("SUCCESS: Service story polishing and textarea update verified.");
+      
+      // 8. Test Pending Listing Verification Flow
+      logToRunner("Testing Pending listing verification flow...");
+      handleLogout();
+      await wait(300);
+      
+      usernameInput.value = "pending@gmail.com";
+      passwordInput.value = "mypassword";
+      loginForm.dispatchEvent(new Event('submit'));
+      
+      let elapsedVerify = 0;
+      while (document.getElementById('verification-overlay').classList.contains('hidden') && elapsedVerify < 3000) {
+        await wait(100);
+        elapsedVerify += 100;
+      }
+      
+      if (document.getElementById('verification-overlay').classList.contains('hidden')) {
+        throw new Error("Verification overlay did not appear for Pending provider login");
+      }
+      logToRunner("SUCCESS: Verification overlay displayed successfully for Pending provider.");
+      
+      const vNewPass = document.getElementById('verify-new-password');
+      const vConfPass = document.getElementById('verify-confirm-password');
+      const verifyForm = document.getElementById('form-verify-listing');
+      
+      vNewPass.value = "verifiedPass123";
+      vConfPass.value = "verifiedPass123";
+      verifyForm.dispatchEvent(new Event('submit'));
+      
+      let elapsedActivated = 0;
+      while (!document.getElementById('verification-overlay').classList.contains('hidden') && elapsedActivated < 3000) {
+        await wait(100);
+        elapsedActivated += 100;
+      }
+      
+      if (!document.getElementById('verification-overlay').classList.contains('hidden')) {
+        throw new Error("Verification overlay did not hide after password submit");
+      }
+      if (currentUser.status !== "Verified") {
+        throw new Error("Local user status did not update to Verified");
+      }
+      logToRunner("SUCCESS: Pending provider listing verified and activated successfully.");
+      
+      // Clean up by logging out
+      handleLogout();
 
       // Restore fetch
       window.fetch = originalFetch;
