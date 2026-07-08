@@ -64,18 +64,26 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Propagated spreadsheet deletions to client devices by tracking a client-side `synced` state flag on local vendor data.
 - [x] Implemented shared reviews database syncing, dynamically generating and syncing a `"Reviews"` sheet tab for community-wide review comment discovery.
 - [x] Built and deployed the ProviderPortal PWA under `/ProviderPortal` with local automated integration test suite (`test_provider_portal.js`), Email/Phone & Password authentication, a Change Password form, and Speech-to-Text with AI-polishing.
+- [x] Configured a custom desktop shortcut (`Provider Portal.lnk`) with the brand icon logo for easy PWA launching.
+- [x] Implemented unified Google Apps Script backend supporting Gmail onboarding emails to newly suggested providers.
+- [x] Authorized Apps Script OAuth permissions via a manual `testEmailPermission` helper function.
+- [x] Added real-time telephone formatting `(XXX) XXX-XXXX` on new contractor registration.
+- [x] Changed telephone input fields to `type="tel"` to launch mobile numeric keypads automatically.
+- [x] Activated GitHub Pages hosting on the public repository `gbarrett9705Aragon/HelpFind`.
 
 ---
 
 ## 🏁 Handover Notes & Next Steps
 1. **Current Operating State**: 
-   * The main app is **100% live** at `https://help-find.vercel.app`.
-   * The **ProviderPortal PWA** is **100% live** at `https://help-find.vercel.app/ProviderPortal/` (requiring hard refresh `Ctrl + F5` if cached).
-   * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to Vercel.
+   * The main app is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/` (and mirrored on Vercel).
+   * The **ProviderPortal PWA** is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/`.
+   * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to GitHub Pages.
    * New registrations, rating changes, and hire counts automatically update both the browser cache and append/increment rows in `ProviderList` spreadsheet in real-time.
+   * Onboarding emails are generated successfully using your authorized Gmail account when a new provider is added.
    * Device UUID consent signatures and timestamps are appended automatically to the `AuditLedger` tab.
    * ProviderPortal login works using registered **Email** or **Phone Number** combined with the `Password` column in `ProviderList` (initial default passwords are auto-populated as digits of the phone number, e.g., `6127599083` for Barrett AI Consulting).
 2. **Next Steps for Next Session**:
+   * Verify the provider onboarding email verification flow and claim listings in the portal.
    * Introduce resident-facing search enhancements (e.g. searching review text comments or sorting by punctuality).
    * Incorporate contractor photo uploads via Apps Script base64 sync.
    * Add neighborhood announcement banners controlled directly from a tab in `ProviderList.gsheet`.
