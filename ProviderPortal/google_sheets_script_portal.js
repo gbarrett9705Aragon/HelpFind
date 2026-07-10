@@ -22,7 +22,7 @@
 
 // SPREADSHEET CONFIGURATION
 // Paste your Google Sheet ID here so this standalone script knows which sheet to update.
-var SPREADSHEET_ID = "YOUR_SPREADSHEET_ID_HERE";
+var SPREADSHEET_ID = "1peKUmIWMQcaeM3amktkLspFRoWb_pK-AcDSw4hV_M8k";
 
 function doGet(e) {
   return handleRequest(e);
@@ -71,6 +71,13 @@ function handleRequest(e) {
         }
       }
       ss = SpreadsheetApp.openById(cleanId);
+    }
+
+    if (!ss) {
+      return createJSONResponse({ 
+        status: "error", 
+        message: "Failed to open Spreadsheet. Please verify that SPREADSHEET_ID is correct and that the script has permission to access it." 
+      });
     }
 
     var sheet = ss.getSheetByName("ProviderList");
