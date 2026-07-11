@@ -70,18 +70,22 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Added real-time telephone formatting `(XXX) XXX-XXXX` on new contractor registration.
 - [x] Changed telephone input fields to `type="tel"` to launch mobile numeric keypads automatically.
 - [x] Activated GitHub Pages hosting on the public repository `gbarrett9705Aragon/HelpFind`.
+- [x] Resolved Apps Script `TypeError: Cannot read properties of null` error in `HelpFind_ProviderPortal_Backend` by correcting the spreadsheet ID typo (`1peKUmlWMQcaeM3amktkLspFRoWb_pK-AcDSw4hV_M8k` with lowercase `l` instead of capital `I`).
+- [x] Added null-safety checks in the portal backend script to prevent crashes and return descriptive JSON errors.
+- [x] Changed the Provider Portal theme from dark mode to a premium high-contrast Light Mode matching the main app.
+- [x] Styled all required input fields in the Provider Portal in red and added a bold red asterisk (`*`) to their labels.
+- [x] Incremented the PWA Service Worker cache version to `v2` to force mobile styling updates.
 
 ---
 
 ## 🏁 Handover Notes & Next Steps
 1. **Current Operating State**: 
-   * The main app is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/` (and mirrored on Vercel).
-   * The **ProviderPortal PWA** is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/`.
+   * The main app is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/`.
+   * The **ProviderPortal PWA** is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/` in a high-contrast Light Mode.
    * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to GitHub Pages.
-   * New registrations, rating changes, and hire counts automatically update both the browser cache and append/increment rows in `ProviderList` spreadsheet in real-time.
-   * Onboarding emails are generated successfully using your authorized Gmail account when a new provider is added.
-   * Device UUID consent signatures and timestamps are appended automatically to the `AuditLedger` tab.
-   * ProviderPortal login works using registered **Email** or **Phone Number** combined with the `Password` column in `ProviderList` (initial default passwords are auto-populated as digits of the phone number, e.g., `6127599083` for Barrett AI Consulting).
+   * New registrations, rating changes, and hire counts automatically update the `ProviderList` sheet in real-time.
+   * Onboarding emails are generated successfully and sent to new providers, linking them to the portal.
+   * Logging into the portal for the first time triggers the "Claim Your Listing" screen which updates their status from `pending` to `Verified` in the sheet upon password registration.
 2. **Next Steps for Next Session**:
    * Verify the provider onboarding email verification flow and claim listings in the portal.
    * Introduce resident-facing search enhancements (e.g. searching review text comments or sorting by punctuality).
