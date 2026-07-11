@@ -1,4 +1,4 @@
-const CACHE_NAME = 'provider-portal-v1';
+const CACHE_NAME = 'provider-portal-v2';
 const ASSETS = [
   './',
   './index.html',
