@@ -397,7 +397,7 @@ async function handleVerifyListing(e) {
 
 function renderDashboard() {
   // Check if provider is pending verification
-  const isPending = currentUser.status === "Pending";
+  const isPending = currentUser.status && currentUser.status.trim().toLowerCase() === 'pending';
   const verificationOverlay = document.getElementById('verification-overlay');
   
   if (isPending) {
