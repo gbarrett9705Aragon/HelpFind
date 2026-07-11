@@ -3,25 +3,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-base: #090d16;
-  --bg-card: #111827;
-  --bg-input: #1f2937;
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-glow: rgba(99, 102, 241, 0.15);
-  --accent: #a855f7;
-  --accent-glow: rgba(168, 85, 247, 0.2);
-  --success: #10b981;
-  --success-glow: rgba(16, 185, 129, 0.15);
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: rgba(255, 255, 255, 0.08);
+  --bg-base: #cbd5e1; /* Matched to main HelpFind app body background */
+  --bg-card: #ffffff;
+  --bg-input: #f8fafc;
+  --primary: #2563eb; /* Royal Blue */
+  --primary-hover: #1d4ed8;
+  --primary-glow: rgba(37, 99, 235, 0.1);
+  --accent: #4f46e5; /* Indigo accent */
+  --accent-glow: rgba(79, 70, 229, 0.1);
+  --success: #16a34a;
+  --success-glow: rgba(22, 163, 74, 0.1);
+  --warning: #b45309;
+  --danger: #dc2626; /* High-contrast red for required fields */
+  --text-main: #0f172a; /* Slate 900 */
+  --text-muted: #475569; /* Slate 600 */
+  --border: #cbd5e1; /* Slate 300 */
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.08);
 }
 
 * {
@@ -52,14 +52,14 @@ body {
   flex-direction: column;
   background-color: var(--bg-base);
   position: relative;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
 }
 
 header {
   padding: 1.25rem 1.5rem;
-  background: rgba(17, 24, 39, 0.8);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
@@ -100,7 +100,7 @@ header {
 /* Offline Banner */
 .offline-banner {
   background: var(--warning);
-  color: #000;
+  color: #fff;
   font-size: 0.75rem;
   font-weight: 700;
   text-align: center;
@@ -168,7 +168,7 @@ h3 {
 }
 
 .card:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 /* Login Screen UI */
@@ -290,7 +290,7 @@ h3 {
 
 /* Dashboard Details Card */
 .provider-profile-card {
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(21, 16, 43, 0.95));
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-input));
   border-left: 4px solid var(--primary);
 }
 
@@ -311,7 +311,7 @@ h3 {
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.04);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -561,13 +561,13 @@ h3 {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.04);
   color: var(--text-main);
   border: 1px solid var(--border);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .btn:disabled {
@@ -601,12 +601,12 @@ h3 {
 }
 
 .reviews-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 99px;
 }
 
 .review-item {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(0, 0, 0, 0.02);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 0.9rem;
@@ -762,7 +762,7 @@ h3 {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(9, 13, 22, 0.85);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(4px);
   z-index: 999;
   display: flex;
@@ -776,7 +776,7 @@ h3 {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.05);
+  border: 3px solid rgba(0, 0, 0, 0.05);
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -830,4 +830,18 @@ h3 {
 
 .verification-card {
   border-top: 4px solid var(--accent);
+}
+
+/* Color labels of required inputs red to make required fields stand out clearly */
+.form-group:has(input[required]) label,
+.form-group:has(textarea[required]) label {
+  color: var(--danger) !important;
+}
+
+/* Add a red asterisk to make required labels visually distinct */
+.form-group:has(input[required]) label::after,
+.form-group:has(textarea[required]) label::after {
+  content: " *";
+  color: var(--danger);
+  font-weight: bold;
 }
