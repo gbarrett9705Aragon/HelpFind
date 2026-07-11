@@ -22,7 +22,7 @@
 
 // SPREADSHEET CONFIGURATION
 // Paste your Google Sheet ID here so this standalone script knows which sheet to update.
-var SPREADSHEET_ID = "1peKUmIWMQcaeM3amktkLspFRoWb_pK-AcDSw4hV_M8k";
+var SPREADSHEET_ID = "1peKUmlWMQcaeM3amktkLspFRoWb_pK-AcDSw4hV_M8k";
 
 function doGet(e) {
   return handleRequest(e);
