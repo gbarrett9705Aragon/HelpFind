@@ -396,9 +396,12 @@ function handleRequest(e) {
         "Non-Emergency Medical Transport": "Lifestyle & Caregiving",
         
         "Apple/PC/Tablet Repair": "Technology & Electronics",
+        "Artificial Intelligence Consulting": "Technology & Electronics",
         "Digital Photo Backup": "Technology & Electronics",
+        "Newsletters": "Technology & Electronics",
         "Smart Home Devices": "Technology & Electronics",
         "Smart TV & Soundbar Setup": "Technology & Electronics",
+        "Web and Mobile App Development": "Technology & Electronics",
         "Wi-Fi & Internet Troubleshooting": "Technology & Electronics",
         
         "Auto Mechanics": "Automotive & Golf Carts",

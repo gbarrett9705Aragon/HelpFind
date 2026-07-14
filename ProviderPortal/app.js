@@ -40,9 +40,12 @@ const CATEGORY_SERVICES = {
   ],
   "Technology & Electronics": [
     "Apple/PC/Tablet Repair",
+    "Artificial Intelligence Consulting",
     "Digital Photo Backup",
+    "Newsletters",
     "Smart Home Devices",
     "Smart TV & Soundbar Setup",
+    "Web and Mobile App Development",
     "Wi-Fi & Internet Troubleshooting"
   ],
   "Automotive & Golf Carts": [
