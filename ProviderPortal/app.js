@@ -3,6 +3,66 @@
 // Google Sheets API Web App URL (Dedicated ProviderPortal backend Apps Script)
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwUDg5GkL6Dd9zbgG2KjnvBMvecrjQ8s3v_VMq2_7RK6EnfZt7WUn391EDpEU7M0xnZ/exec";
 
+const CATEGORY_SERVICES = {
+  "Home Repairs & Trades": [
+    "Appliance Repair",
+    "Chimney Sweeping",
+    "Deck/Patio Repair",
+    "Electricians",
+    "Garage Door Repair",
+    "Gutters & Siding",
+    "Handymen",
+    "HVAC",
+    "Locksmiths",
+    "Mailbox Repair",
+    "Plumbers",
+    "Roofers"
+  ],
+  "Lawn, Landscaping & Outdoors": [
+    "Hill Cutting",
+    "Landscaping Design",
+    "Lawn Mowing & Edging",
+    "Pest Control",
+    "Pressure Washing",
+    "Sprinkler & Irrigation Repair",
+    "Tree & Trimming",
+    "Weed Control & Fertilization"
+  ],
+  "Lifestyle & Caregiving": [
+    "Carpet/Rug Cleaning",
+    "Companion Care/In-Home Caregivers",
+    "Errands & Grocery Shopping",
+    "Food Vendors/Meal Prep",
+    "Housekeeping/Maid Service",
+    "House/Pet Sitting",
+    "In-Home Hair & Nail Grooming",
+    "Non-Emergency Medical Transport"
+  ],
+  "Technology & Electronics": [
+    "Apple/PC/Tablet Repair",
+    "Digital Photo Backup",
+    "Smart Home Devices",
+    "Smart TV & Soundbar Setup",
+    "Wi-Fi & Internet Troubleshooting"
+  ],
+  "Automotive & Golf Carts": [
+    "Auto Mechanics",
+    "Detailing/Car Wash",
+    "Golf Cart Maintenance & Customization",
+    "Towing & Tire Services"
+  ],
+  "Home Renovation & Design": [
+    "Bathroom Accessibility Remodeling",
+    "Flooring & Tiling",
+    "Painters (Interior/Exterior)",
+    "Window & Glass Replacement",
+    "Window Treatments"
+  ],
+  "ZZZ Other Category": [
+    "Other Service"
+  ]
+};
+
 // Global App State
 let currentUser = null; // Stores authenticated provider object
 let currentReviews = []; // Reviews for this specific provider
@@ -84,6 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set up verification form submit listener
   document.getElementById('form-verify-listing').addEventListener('submit', handleVerifyListing);
 
+  // Set up save services button listener
+  document.getElementById('btn-save-services').addEventListener('click', savePortalServices);
+  
+  // Render services grid
+  renderPortalServicesGrid();
+
   // 4. Initialize Speech Recognition
   initSpeechRecognition();
 
@@ -149,6 +215,7 @@ function restoreCachedSession() {
   if (savedUser) {
     try {
       currentUser = JSON.parse(savedUser);
+      migrateVendorTaxonomy(currentUser);
       currentReviews = savedReviews ? JSON.parse(savedReviews) : [];
       renderDashboard();
     } catch (e) {
@@ -208,6 +275,7 @@ async function handlePasswordLogin(e) {
     const data = await response.json();
     if (data.status === "success" && data.provider) {
       currentUser = data.provider;
+      migrateVendorTaxonomy(currentUser);
       currentReviews = data.reviews || [];
       
       // Cache session in browser tab
@@ -250,6 +318,7 @@ async function handleDemoLogin() {
     const data = await response.json();
     if (data.status === "success" && data.provider) {
       currentUser = data.provider;
+      migrateVendorTaxonomy(currentUser);
       currentReviews = data.reviews || [];
       const password = currentUser.password || ""; // Grab actual password
 
@@ -436,6 +505,15 @@ function renderDashboard() {
     storyTextarea.value = '';
     btnPolishStory.disabled = true;
     btnSaveStory.disabled = true;
+  }
+
+  // Update checkbox states in Manage Services card
+  if (currentUser) {
+    const userServices = currentUser.service ? currentUser.service.split(',').map(s => s.trim()) : [];
+    const cbs = document.querySelectorAll('input[name="portal-services-checkbox"]');
+    cbs.forEach(cb => {
+      cb.checked = userServices.includes(cb.value);
+    });
   }
 
   // Render review history elements
@@ -626,5 +704,132 @@ async function saveOrPolishStory(shouldPolish = false) {
     showToast(error.message || "Error saving story. Try again.", true);
   } finally {
     hideLoading();
+  }
+}
+
+function renderPortalServicesGrid() {
+  const container = document.getElementById('portal-services-container');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  for (const category in CATEGORY_SERVICES) {
+    const catDiv = document.createElement('div');
+    catDiv.style.marginBottom = '0.5rem';
+    
+    const catTitle = document.createElement('h4');
+    catTitle.textContent = category;
+    catTitle.style.fontSize = '0.9rem';
+    catTitle.style.borderBottom = '1px solid var(--border-color)';
+    catTitle.style.paddingBottom = '0.25rem';
+    catTitle.style.marginBottom = '0.35rem';
+    catDiv.appendChild(catTitle);
+    
+    const gridDiv = document.createElement('div');
+    gridDiv.style.display = 'grid';
+    gridDiv.style.gridTemplateColumns = 'repeat(auto-fill, minmax(180px, 1fr))';
+    gridDiv.style.gap = '0.5rem';
+    
+    const services = CATEGORY_SERVICES[category];
+    services.forEach(srv => {
+      const label = document.createElement('label');
+      label.style.display = 'flex';
+      label.style.alignItems = 'center';
+      label.style.gap = '0.5rem';
+      label.style.fontSize = '0.8rem';
+      label.style.cursor = 'pointer';
+      
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.name = 'portal-services-checkbox';
+      cb.value = srv;
+      cb.style.width = 'auto';
+      cb.style.cursor = 'pointer';
+      
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(srv));
+      gridDiv.appendChild(label);
+    });
+    
+    catDiv.appendChild(gridDiv);
+    container.appendChild(catDiv);
+  }
+}
+
+async function savePortalServices() {
+  if (!currentUser) return;
+  
+  const checkedCbs = Array.from(document.querySelectorAll('input[name="portal-services-checkbox"]:checked'));
+  const selectedServices = checkedCbs.map(cb => cb.value).join(', ');
+  
+  if (selectedServices.length === 0) {
+    showToast("Please check at least one service.", true);
+    return;
+  }
+  
+  const password = sessionStorage.getItem('provider_password') || '';
+  const username = currentUser.email || currentUser.phone;
+  const isDemo = !password;
+  
+  let action = isDemo ? 'update_provider_services_demo' : 'update_provider_services';
+  let params = `services=${encodeURIComponent(selectedServices)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+  if (isDemo) {
+    params = `services=${encodeURIComponent(selectedServices)}&email=${encodeURIComponent(username)}`;
+  }
+  
+  showLoading("Saving services to Google Sheet...");
+  
+  const url = `${GOOGLE_SHEETS_API_URL}?action=${action}&${params}`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Could not sync with Google Sheets backend");
+    
+    const data = await response.json();
+    if (data.status === "success") {
+      currentUser.service = data.services;
+      currentUser.category = data.category;
+      sessionStorage.setItem('provider_user', JSON.stringify(currentUser));
+      
+      profileCategory.textContent = `${currentUser.category} • ${currentUser.service || "General"}`;
+      
+      showToast("Services updated successfully!");
+    } else {
+      throw new Error(data.message || "Failed to update services.");
+    }
+  } catch (error) {
+    console.error("Services update error:", error);
+    showToast(error.message || "Error updating services. Try again.", true);
+  } finally {
+    hideLoading();
+  }
+}
+
+const LEGACY_SERVICE_MAP = {
+  "Apple/PC Repair": "Apple/PC/Tablet Repair",
+  "Carpet/Rug Shampoo": "Carpet/Rug Cleaning",
+  "Detailing/Pressure Washing": "Pressure Washing",
+  "Food Vendors": "Food Vendors/Meal Prep",
+  "Auto (Tow/Tire)": "Towing & Tire Services",
+  "Golf Cart Repair": "Golf Cart Maintenance & Customization",
+  "Sprinkler Repair": "Sprinkler & Irrigation Repair",
+  "Tree & Shrub Trimming": "Tree & Trimming"
+};
+
+const LEGACY_CATEGORY_MAP = {
+  "Lifestyle & Convenience": "Lifestyle & Caregiving",
+  "Property & Grounds Care": "Lawn, Landscaping & Outdoors",
+  "Home Improvement": "Home Renovation & Design",
+  "General Maintenance": "Home Repairs & Trades"
+};
+
+function migrateVendorTaxonomy(v) {
+  if (v.service) {
+    const services = v.service.split(',').map(s => s.trim());
+    const mappedServices = services.map(s => LEGACY_SERVICE_MAP[s] || s);
+    v.service = mappedServices.join(', ');
+  }
+  if (LEGACY_CATEGORY_MAP[v.category]) {
+    v.category = LEGACY_CATEGORY_MAP[v.category];
   }
 }

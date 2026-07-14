@@ -1,6 +1,25 @@
 // test.js - Automated integration test for HelpFind review flow
 (function() {
   if (!location.search.includes('run-tests=true')) return;
+
+  const originalFetch = window.fetch;
+  window.fetch = async function(url, options) {
+    if (typeof url === 'string' && url.includes('action=verify_pin')) {
+      const pin = new URLSearchParams(url.split('?')[1]).get('pin');
+      if (pin === 'SCP2') {
+        return new Response(JSON.stringify({ status: 'success' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } else {
+        return new Response(JSON.stringify({ status: 'error', message: 'Invalid PIN' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+    return originalFetch(url, options);
+  };
   
   function logToRunner(msg, isError = false) {
     console.log(msg);
@@ -187,9 +206,13 @@
       }
       
       document.getElementById('new-vendor-name').value = "Grady";
-      document.getElementById('new-vendor-category').value = "General Maintenance";
+      document.getElementById('new-vendor-category').value = "Home Repairs & Trades";
       handleNewVendorCategoryChange();
-      document.getElementById('new-vendor-service').value = "Handymen";
+      
+      const cb = document.querySelector('input[name="new-vendor-services-checkbox"][value="Handymen"]');
+      if (!cb) throw new Error("Handymen checkbox not found after category change");
+      cb.checked = true;
+
       document.getElementById('new-vendor-phone').value = "(555) 777-8888";
       document.getElementById('new-vendor-email').value = "grady@suncity.com";
       document.getElementById('rev-comment').value = "Grady did an excellent job setting up my smart TV.";
@@ -225,8 +248,8 @@
       if (addedVendor.punctualityScore !== 0) {
         throw new Error(`New vendor 'punctualityScore' is ${addedVendor.punctualityScore}, expected 0`);
       }
-      if (addedVendor.category !== "General Maintenance") {
-        throw new Error(`New vendor 'category' is ${addedVendor.category}, expected General Maintenance`);
+      if (addedVendor.category !== "Home Repairs & Trades") {
+        throw new Error(`New vendor 'category' is ${addedVendor.category}, expected Home Repairs & Trades`);
       }
       if (addedVendor.service !== "Handymen") {
         throw new Error(`New vendor 'service' is ${addedVendor.service}, expected Handymen`);

@@ -61,10 +61,12 @@
             <div class="filter-row-dropdown" style="display: flex; gap: 0.5rem; width: 100%;">
               <select id="dir-category" onchange="handleCategoryFilterChange()" style="flex: 1;">
                 <option value="all">Categories (All)</option>
-                <option value="Lifestyle & Convenience">Lifestyle & Convenience</option>
-                <option value="Property & Grounds Care">Property & Grounds Care</option>
-                <option value="Home Improvement">Home Improvement</option>
-                <option value="General Maintenance">General Maintenance</option>
+                <option value="Home Repairs & Trades">Home Repairs & Trades</option>
+                <option value="Lawn, Landscaping & Outdoors">Lawn, Landscaping & Outdoors</option>
+                <option value="Lifestyle & Caregiving">Lifestyle & Caregiving</option>
+                <option value="Technology & Electronics">Technology & Electronics</option>
+                <option value="Automotive & Golf Carts">Automotive & Golf Carts</option>
+                <option value="Home Renovation & Design">Home Renovation & Design</option>
                 <option value="ZZZ Other Category">ZZZ Other Category</option>
               </select>
               <select id="dir-service" onchange="filterDirectory()" disabled style="flex: 1;">
@@ -110,19 +112,21 @@
                   <label for="new-vendor-category">Service Category</label>
                   <select id="new-vendor-category" class="form-input" onchange="handleNewVendorCategoryChange()">
                     <option value="" disabled selected>-- Select Category --</option>
-                    <option value="Lifestyle & Convenience">Lifestyle & Convenience</option>
-                    <option value="Property & Grounds Care">Property & Grounds Care</option>
-                    <option value="Home Improvement">Home Improvement</option>
-                    <option value="General Maintenance">General Maintenance</option>
+                    <option value="Home Repairs & Trades">Home Repairs & Trades</option>
+                    <option value="Lawn, Landscaping & Outdoors">Lawn, Landscaping & Outdoors</option>
+                    <option value="Lifestyle & Caregiving">Lifestyle & Caregiving</option>
+                    <option value="Technology & Electronics">Technology & Electronics</option>
+                    <option value="Automotive & Golf Carts">Automotive & Golf Carts</option>
+                    <option value="Home Renovation & Design">Home Renovation & Design</option>
                     <option value="ZZZ Other Category">ZZZ Other Category</option>
                   </select>
                 </div>
 
                 <div class="form-group">
-                  <label for="new-vendor-service">Service Type (Subcategory)</label>
-                  <select id="new-vendor-service" class="form-input" disabled>
-                    <option value="" disabled selected>-- Select Service --</option>
-                  </select>
+                  <label>Service Types (Select all that apply) <span style="color: red;">*</span></label>
+                  <div id="new-vendor-services-container" class="checkbox-group-container" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; background: var(--bg-card); display: flex; flex-direction: column; gap: 0.5rem;">
+                    <p class="text-muted" style="font-size: 0.8rem; margin: 0; padding: 0.25rem;">Please select a category first.</p>
+                  </div>
                 </div>
                 
                 <div class="form-group">

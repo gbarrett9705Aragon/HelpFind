@@ -1,6 +1,30 @@
 // test_provider_portal.js - Automated integration test for ProviderPortal flow
 (function() {
   if (!location.search.includes('run-tests=true')) return;
+
+  // Mock SpeechRecognition API to bypass permission errors in headless/file environment
+  class MockSpeechRecognition {
+    constructor() {
+      this.continuous = false;
+      this.interimResults = false;
+      this.lang = 'en-US';
+    }
+    start() {
+      setTimeout(() => {
+        if (this.onstart) this.onstart();
+      }, 50);
+    }
+    stop() {
+      setTimeout(() => {
+        if (this.onend) this.onend();
+      }, 50);
+    }
+  }
+  window.webkitSpeechRecognition = MockSpeechRecognition;
+  window.SpeechRecognition = MockSpeechRecognition;
+  if (typeof initSpeechRecognition === 'function') {
+    initSpeechRecognition();
+  }
   
   function logToRunner(msg, isError = false) {
     console.log(msg);

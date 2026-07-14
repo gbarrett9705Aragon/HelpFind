@@ -323,6 +323,133 @@ function handleRequest(e) {
       });
     }
 
+    // 3.5. Update Provider Services
+    if (params.action === "update_provider_services" || params.action === "update_provider_services_demo") {
+      var username = "";
+      var password = "";
+      var servicesText = params.services;
+
+      if (servicesText === undefined || servicesText === null) {
+        return createJSONResponse({ status: "error", message: "Missing services parameter" });
+      }
+
+      if (params.action === "update_provider_services_demo") {
+        username = params.email;
+      } else {
+        username = params.username;
+        password = params.password;
+      }
+
+      if (!username) {
+        return createJSONResponse({ status: "error", message: "Username parameter is required" });
+      }
+
+      username = username.trim().toLowerCase();
+      var providerRowIdx = findProviderRowByUsername(data, emailCol, phoneCol, username);
+
+      if (providerRowIdx === -1) {
+        return createJSONResponse({ status: "error", message: "Provider not found" });
+      }
+
+      // Verify password if not demo
+      if (params.action !== "update_provider_services_demo") {
+        var row = data[providerRowIdx - 1];
+        var storedPassword = String(row[passwordCol] || "").trim();
+        if (storedPassword !== password) {
+          return createJSONResponse({ status: "error", message: "Incorrect password credentials" });
+        }
+      }
+
+      var newServices = servicesText.trim();
+      
+      // Compute matching categories from the new list of services
+      var serviceToCategoryMap = {
+        "Appliance Repair": "Home Repairs & Trades",
+        "Chimney Sweeping": "Home Repairs & Trades",
+        "Deck/Patio Repair": "Home Repairs & Trades",
+        "Electricians": "Home Repairs & Trades",
+        "Garage Door Repair": "Home Repairs & Trades",
+        "Gutters & Siding": "Home Repairs & Trades",
+        "Handymen": "Home Repairs & Trades",
+        "HVAC": "Home Repairs & Trades",
+        "Locksmiths": "Home Repairs & Trades",
+        "Mailbox Repair": "Home Repairs & Trades",
+        "Plumbers": "Home Repairs & Trades",
+        "Roofers": "Home Repairs & Trades",
+        
+        "Hill Cutting": "Lawn, Landscaping & Outdoors",
+        "Landscaping Design": "Lawn, Landscaping & Outdoors",
+        "Lawn Mowing & Edging": "Lawn, Landscaping & Outdoors",
+        "Pest Control": "Lawn, Landscaping & Outdoors",
+        "Pressure Washing": "Lawn, Landscaping & Outdoors",
+        "Sprinkler & Irrigation Repair": "Lawn, Landscaping & Outdoors",
+        "Tree & Trimming": "Lawn, Landscaping & Outdoors",
+        "Weed Control & Fertilization": "Lawn, Landscaping & Outdoors",
+        
+        "Carpet/Rug Cleaning": "Lifestyle & Caregiving",
+        "Companion Care/In-Home Caregivers": "Lifestyle & Caregiving",
+        "Errands & Grocery Shopping": "Lifestyle & Caregiving",
+        "Food Vendors/Meal Prep": "Lifestyle & Caregiving",
+        "Housekeeping/Maid Service": "Lifestyle & Caregiving",
+        "House/Pet Sitting": "Lifestyle & Caregiving",
+        "In-Home Hair & Nail Grooming": "Lifestyle & Caregiving",
+        "Non-Emergency Medical Transport": "Lifestyle & Caregiving",
+        
+        "Apple/PC/Tablet Repair": "Technology & Electronics",
+        "Digital Photo Backup": "Technology & Electronics",
+        "Smart Home Devices": "Technology & Electronics",
+        "Smart TV & Soundbar Setup": "Technology & Electronics",
+        "Wi-Fi & Internet Troubleshooting": "Technology & Electronics",
+        
+        "Auto Mechanics": "Automotive & Golf Carts",
+        "Detailing/Car Wash": "Automotive & Golf Carts",
+        "Golf Cart Maintenance & Customization": "Automotive & Golf Carts",
+        "Towing & Tire Services": "Automotive & Golf Carts",
+        
+        "Bathroom Accessibility Remodeling": "Home Renovation & Design",
+        "Flooring & Tiling": "Home Renovation & Design",
+        "Painters (Interior/Exterior)": "Home Renovation & Design",
+        "Window & Glass Replacement": "Home Renovation & Design",
+        "Window Treatments": "Home Renovation & Design"
+      };
+
+      var services = newServices.split(",");
+      var categoriesSet = {};
+      for (var s = 0; s < services.length; s++) {
+        var sName = services[s].trim();
+        var cat = serviceToCategoryMap[sName];
+        if (cat) {
+          categoriesSet[cat] = true;
+        } else if (sName) {
+          categoriesSet["ZZZ Other Category"] = true;
+        }
+      }
+      var categoriesArray = [];
+      for (var cKey in categoriesSet) {
+        categoriesArray.push(cKey);
+      }
+      var newCategories = categoriesArray.join(", ");
+
+      // Update Service cell
+      var serviceColIdx = headersRow.indexOf("service");
+      if (serviceColIdx !== -1) {
+        sheet.getRange(providerRowIdx, serviceColIdx + 1).setValue(newServices);
+      }
+
+      // Update Category cell
+      var categoryColIdx = headersRow.indexOf("category");
+      if (categoryColIdx !== -1) {
+        sheet.getRange(providerRowIdx, categoryColIdx + 1).setValue(newCategories);
+      }
+
+      return createJSONResponse({ 
+        status: "success", 
+        message: "Services updated successfully",
+        services: newServices,
+        category: newCategories
+      });
+    }
+
     return createJSONResponse({ status: "error", message: "Unknown action for ProviderPortal Backend" });
 
   } catch (err) {

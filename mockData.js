@@ -702,40 +702,122 @@ const DEFAULT_LEADS = [
 ];
 
 const CATEGORY_SERVICES = {
-  "Lifestyle & Convenience": [
-    "Apple/PC Repair",
-    "Carpet/Rug Shampoo",
-    "Detailing/Pressure Washing",
-    "Food Vendors",
-    "Housekeeping/Maid Service",
-    "House/Pet Sitting"
-  ],
-  "Property & Grounds Care": [
-    "Hill Cutting",
-    "Landscaping",
-    "Pest Control"
-  ],
-  "Home Improvement": [
-    "Flooring",
-    "Glass/Windows",
-    "Painters",
-    "Window Treatments"
-  ],
-  "General Maintenance": [
-    "Auto (Tow/Tire)",
-    "Golf Cart Repair",
+  "Home Repairs & Trades": [
+    "Appliance Repair",
+    "Chimney Sweeping",
+    "Deck/Patio Repair",
     "Electricians",
+    "Garage Door Repair",
+    "Gutters & Siding",
     "Handymen",
+    "HVAC",
+    "Locksmiths",
     "Mailbox Repair",
     "Plumbers",
-    "Roofers",
-    "Sprinkler Repair",
-    "HVAC"
+    "Roofers"
+  ],
+  "Lawn, Landscaping & Outdoors": [
+    "Hill Cutting",
+    "Landscaping Design",
+    "Lawn Mowing & Edging",
+    "Pest Control",
+    "Pressure Washing",
+    "Sprinkler & Irrigation Repair",
+    "Tree & Trimming",
+    "Weed Control & Fertilization"
+  ],
+  "Lifestyle & Caregiving": [
+    "Carpet/Rug Cleaning",
+    "Companion Care/In-Home Caregivers",
+    "Errands & Grocery Shopping",
+    "Food Vendors/Meal Prep",
+    "Housekeeping/Maid Service",
+    "House/Pet Sitting",
+    "In-Home Hair & Nail Grooming",
+    "Non-Emergency Medical Transport"
+  ],
+  "Technology & Electronics": [
+    "Apple/PC/Tablet Repair",
+    "Digital Photo Backup",
+    "Smart Home Devices",
+    "Smart TV & Soundbar Setup",
+    "Wi-Fi & Internet Troubleshooting"
+  ],
+  "Automotive & Golf Carts": [
+    "Auto Mechanics",
+    "Detailing/Car Wash",
+    "Golf Cart Maintenance & Customization",
+    "Towing & Tire Services"
+  ],
+  "Home Renovation & Design": [
+    "Bathroom Accessibility Remodeling",
+    "Flooring & Tiling",
+    "Painters (Interior/Exterior)",
+    "Window & Glass Replacement",
+    "Window Treatments"
   ],
   "ZZZ Other Category": [
     "Other Service"
   ]
 };
+
+const LEGACY_SERVICE_MAP = {
+  "Apple/PC Repair": "Apple/PC/Tablet Repair",
+  "Carpet/Rug Shampoo": "Carpet/Rug Cleaning",
+  "Detailing/Pressure Washing": "Pressure Washing",
+  "Food Vendors": "Food Vendors/Meal Prep",
+  "Auto (Tow/Tire)": "Towing & Tire Services",
+  "Golf Cart Repair": "Golf Cart Maintenance & Customization",
+  "Sprinkler Repair": "Sprinkler & Irrigation Repair",
+  "Tree & Shrub Trimming": "Tree & Trimming"
+};
+
+const LEGACY_CATEGORY_MAP = {
+  "Lifestyle & Convenience": "Lifestyle & Caregiving",
+  "Property & Grounds Care": "Lawn, Landscaping & Outdoors",
+  "Home Improvement": "Home Renovation & Design",
+  "General Maintenance": "Home Repairs & Trades"
+};
+
+function migrateVendorTaxonomy(v) {
+  if (v.service) {
+    // If it's a comma-separated list of services, map each one
+    const services = v.service.split(',').map(s => s.trim());
+    const mappedServices = services.map(s => LEGACY_SERVICE_MAP[s] || s);
+    v.service = mappedServices.join(', ');
+  }
+  if (LEGACY_CATEGORY_MAP[v.category]) {
+    v.category = LEGACY_CATEGORY_MAP[v.category];
+  }
+}
+
+function getCategoryForService(serviceName) {
+  for (const cat in CATEGORY_SERVICES) {
+    if (CATEGORY_SERVICES[cat].includes(serviceName)) {
+      return cat;
+    }
+  }
+  return "ZZZ Other Category";
+}
+
+function getCategoriesForServices(servicesString) {
+  if (!servicesString) return ["ZZZ Other Category"];
+  const services = servicesString.split(',').map(s => s.trim());
+  const categories = new Set();
+  services.forEach(srv => {
+    let found = false;
+    for (const cat in CATEGORY_SERVICES) {
+      if (CATEGORY_SERVICES[cat].includes(srv)) {
+        categories.add(cat);
+        found = true;
+      }
+    }
+    if (!found) {
+      categories.add("ZZZ Other Category");
+    }
+  });
+  return Array.from(categories);
+}
 
 // Initialize localStorage with default data if empty or outdated
 function initDatabase(forceReset = false) {
@@ -761,6 +843,9 @@ function initDatabase(forceReset = false) {
     localStorage.removeItem("helpfind_leads");
   }
 
+  // Pre-migrate DEFAULT_VENDORS
+  DEFAULT_VENDORS.forEach(migrateVendorTaxonomy);
+
   if (!localStorage.getItem("helpfind_residents")) {
     localStorage.setItem("helpfind_residents", JSON.stringify(DEFAULT_RESIDENTS));
   }
@@ -769,9 +854,16 @@ function initDatabase(forceReset = false) {
   } else {
     // Migration: Ensure timesUsed, service, and synced properties exist on all cached vendors
     try {
-      const cached = JSON.parse(localStorage.getItem("helpfind_vendors"));
+      const cachedVendors = JSON.parse(localStorage.getItem("helpfind_vendors"));
       let updated = false;
-      cached.forEach(v => {
+      cachedVendors.forEach(v => {
+        const oldSrv = v.service;
+        const oldCat = v.category;
+        migrateVendorTaxonomy(v);
+        if (v.service !== oldSrv || v.category !== oldCat) {
+          updated = true;
+        }
+
         if (v.timesUsed === undefined) {
           const def = DEFAULT_VENDORS.find(d => d.id === v.id);
           v.timesUsed = def ? def.timesUsed : 1;
@@ -788,7 +880,7 @@ function initDatabase(forceReset = false) {
         }
       });
       if (updated) {
-        localStorage.setItem("helpfind_vendors", JSON.stringify(cached));
+        localStorage.setItem("helpfind_vendors", JSON.stringify(cachedVendors));
       }
     } catch (e) {
       console.error("Failed to migrate vendors database:", e);

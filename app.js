@@ -270,6 +270,9 @@ function filterDirectory() {
 
   const vendors = getVendors();
   const filtered = vendors.filter(v => {
+    const vendorServices = v.service ? v.service.split(',').map(s => s.trim()) : [];
+    const vendorCategories = getCategoriesForServices(v.service);
+
     // Search Query
     const matchesSearch = v.name.toLowerCase().includes(searchVal) ||
                           v.category.toLowerCase().includes(searchVal) ||
@@ -277,10 +280,13 @@ function filterDirectory() {
                           v.description.toLowerCase().includes(searchVal);
     
     // Category Dropdown
-    const matchesCategory = categoryVal === 'all' || v.category === categoryVal;
+    const matchesCategory = categoryVal === 'all' || 
+                            v.category === categoryVal || 
+                            v.category.includes(categoryVal) ||
+                            vendorCategories.includes(categoryVal);
 
     // Service (Subcategory) Dropdown
-    const matchesService = serviceVal === 'all' || v.service === serviceVal;
+    const matchesService = serviceVal === 'all' || vendorServices.includes(serviceVal);
     
     // Senior Discount Pill
     const matchesDiscount = !activeFilters.discount || v.offersSeniorDiscount;
@@ -319,13 +325,22 @@ function renderVendorsList(vendors) {
     const card = document.createElement('div');
     card.className = 'vendor-card';
 
+    const vendorServices = v.service ? v.service.split(',').map(s => s.trim()) : [];
+    const serviceBadges = vendorServices.map(s => `<span class="service-badge" style="background: rgba(15, 23, 42, 0.04); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 500;">${s}</span>`).join(' ');
+
+    // Display primary category name or first computed category
+    const displayCategory = v.category && !v.category.includes(',') ? v.category : (getCategoriesForServices(v.service)[0] || v.category);
+
     card.innerHTML = `
       <div class="vendor-header">
         <div class="vendor-meta">
-          <span class="vendor-category">${v.category} &bull; ${v.service}</span>
+          <span class="vendor-category">${displayCategory}</span>
           <span class="vendor-rating">★ ${v.rating.toFixed(1)} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400;">(${v.reviewCount})</span></span>
         </div>
-        <h3 class="vendor-name">${v.name}</h3>
+        <h3 class="vendor-name" style="margin-top: 0.25rem; margin-bottom: 0.25rem;">${v.name}</h3>
+        <div class="vendor-services-list" style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; margin-bottom: 0.5rem;">
+          ${serviceBadges}
+        </div>
         <div class="card-metric-badge">🟢 Used ${v.timesUsed || 0} times by neighbors</div>
       </div>
       
@@ -396,20 +411,17 @@ function toggleNewVendorFields() {
   const fields = document.getElementById('new-vendor-fields');
   const nameInput = document.getElementById('new-vendor-name');
   const phoneInput = document.getElementById('new-vendor-phone');
-  const serviceInput = document.getElementById('new-vendor-service');
   const emailInput = document.getElementById('new-vendor-email');
 
   if (select.value === 'new-vendor') {
     fields.classList.remove('hidden');
     nameInput.required = true;
     phoneInput.required = true;
-    serviceInput.required = true;
     emailInput.required = true;
   } else {
     fields.classList.add('hidden');
     nameInput.required = false;
     phoneInput.required = false;
-    serviceInput.required = false;
     emailInput.required = false;
   }
 }
@@ -442,13 +454,17 @@ function handleSubmitReview(e) {
   if (vendorId === 'new-vendor') {
     newName = document.getElementById('new-vendor-name').value.trim();
     newCategory = document.getElementById('new-vendor-category').value;
-    newService = document.getElementById('new-vendor-service').value;
+    
+    // Gather checked services
+    const checkedCbs = Array.from(document.querySelectorAll('input[name="new-vendor-services-checkbox"]:checked'));
+    newService = checkedCbs.map(cb => cb.value).join(', ');
+    
     newPhone = document.getElementById('new-vendor-phone').value.trim();
     const emailInput = document.getElementById('new-vendor-email').value.trim();
     newEmail = emailInput;
 
     if (!newName || !newCategory || !newService || !newPhone || !newEmail) {
-      showToast('Please fill out all contractor details including a valid email address.', true);
+      showToast('Please fill out all contractor details including at least one service and a valid email address.', true);
       return;
     }
 
@@ -541,9 +557,8 @@ function handleSubmitReview(e) {
   document.getElementById('new-vendor-fields').classList.add('hidden');
   document.getElementById('new-vendor-name').required = false;
   document.getElementById('new-vendor-phone').required = false;
-  document.getElementById('new-vendor-service').required = false;
   document.getElementById('new-vendor-email').required = false;
-  document.getElementById('new-vendor-service').disabled = true;
+  document.getElementById('new-vendor-services-container').innerHTML = '<p class="text-muted" style="font-size: 0.8rem; margin: 0; padding: 0.25rem;">Please select a category first.</p>';
 
   if (isNew) {
     showToast('New provider registered successfully! An onboarding email has been sent.');
@@ -736,21 +751,32 @@ function handleCategoryFilterChange() {
 
 function handleNewVendorCategoryChange() {
   const categoryVal = document.getElementById('new-vendor-category').value;
-  const serviceSelect = document.getElementById('new-vendor-service');
+  const container = document.getElementById('new-vendor-services-container');
   
-  // Clear existing options
-  serviceSelect.innerHTML = '<option value="" disabled selected>-- Select Service --</option>';
+  container.innerHTML = '';
   
   if (!categoryVal) {
-    serviceSelect.disabled = true;
+    container.innerHTML = '<p class="text-muted" style="font-size: 0.8rem; margin: 0; padding: 0.25rem;">Please select a category first.</p>';
   } else {
-    serviceSelect.disabled = false;
     const catServices = getCategoryServices()[categoryVal] || [];
     catServices.forEach(srv => {
-      const opt = document.createElement('option');
-      opt.value = srv;
-      opt.textContent = srv;
-      serviceSelect.appendChild(opt);
+      const label = document.createElement('label');
+      label.style.display = 'flex';
+      label.style.alignItems = 'center';
+      label.style.gap = '0.5rem';
+      label.style.fontSize = '0.85rem';
+      label.style.cursor = 'pointer';
+      
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.name = 'new-vendor-services-checkbox';
+      cb.value = srv;
+      cb.style.width = 'auto';
+      cb.style.cursor = 'pointer';
+      
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(srv));
+      container.appendChild(label);
     });
   }
 }
