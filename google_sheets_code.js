@@ -849,3 +849,146 @@ function testEmailPermission() {
   }
 }
 
+/**
+ * Run this function manually in the Google Apps Script editor to convert
+ * all legacy category names and service names to the new taxonomy format.
+ */
+function migrateSheetTaxonomy() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("ProviderList");
+  if (!sheet) {
+    Logger.log("Sheet 'ProviderList' not found.");
+    return;
+  }
+  
+  var range = sheet.getDataRange();
+  var data = range.getValues();
+  var headers = data[0];
+  
+  var categoryColIdx = -1;
+  var serviceColIdx = -1;
+  
+  for (var col = 0; col < headers.length; col++) {
+    var colName = String(headers[col]).toLowerCase().trim();
+    if (colName === "category") categoryColIdx = col;
+    if (colName === "service") serviceColIdx = col;
+  }
+  
+  if (categoryColIdx === -1 || serviceColIdx === -1) {
+    Logger.log("Missing category or service column. Found headers: " + headers.join(", "));
+    return;
+  }
+  
+  var LEGACY_SERVICE_MAP = {
+    "Apple/PC Repair": "Apple/PC/Tablet Repair",
+    "Carpet/Rug Shampoo": "Carpet/Rug Cleaning",
+    "Detailing/Pressure Washing": "Pressure Washing",
+    "Food Vendors": "Food Vendors/Meal Prep",
+    "Auto (Tow/Tire)": "Towing & Tire Services",
+    "Golf Cart Repair": "Golf Cart Maintenance & Customization",
+    "Sprinkler Repair": "Sprinkler & Irrigation Repair",
+    "Tree & Shrub Trimming": "Tree & Trimming",
+    "Landscaping": "Landscaping Design",
+    "Flooring": "Flooring & Tiling",
+    "Glass/Windows": "Window & Glass Replacement",
+    "Painters": "Painters (Interior/Exterior)",
+    "Roofing": "Roofers",
+    "A/C & Heating": "HVAC"
+  };
+
+  var serviceToCategoryMap = {
+    "Appliance Repair": "Home Repairs & Trades",
+    "Chimney Sweeping": "Home Repairs & Trades",
+    "Deck/Patio Repair": "Home Repairs & Trades",
+    "Electricians": "Home Repairs & Trades",
+    "Garage Door Repair": "Home Repairs & Trades",
+    "Gutters & Siding": "Home Repairs & Trades",
+    "Handymen": "Home Repairs & Trades",
+    "HVAC": "Home Repairs & Trades",
+    "Locksmiths": "Home Repairs & Trades",
+    "Mailbox Repair": "Home Repairs & Trades",
+    "Plumbers": "Home Repairs & Trades",
+    "Roofers": "Home Repairs & Trades",
+    
+    "Hill Cutting": "Lawn, Landscaping & Outdoors",
+    "Landscaping Design": "Lawn, Landscaping & Outdoors",
+    "Lawn Mowing & Edging": "Lawn, Landscaping & Outdoors",
+    "Pest Control": "Lawn, Landscaping & Outdoors",
+    "Pressure Washing": "Lawn, Landscaping & Outdoors",
+    "Sprinkler & Irrigation Repair": "Lawn, Landscaping & Outdoors",
+    "Tree & Trimming": "Lawn, Landscaping & Outdoors",
+    "Weed Control & Fertilization": "Lawn, Landscaping & Outdoors",
+    
+    "Carpet/Rug Cleaning": "Lifestyle & Caregiving",
+    "Companion Care/In-Home Caregivers": "Lifestyle & Caregiving",
+    "Errands & Grocery Shopping": "Lifestyle & Caregiving",
+    "Food Vendors/Meal Prep": "Lifestyle & Caregiving",
+    "Housekeeping/Maid Service": "Lifestyle & Caregiving",
+    "House/Pet Sitting": "Lifestyle & Caregiving",
+    "In-Home Hair & Nail Grooming": "Lifestyle & Caregiving",
+    "Non-Emergency Medical Transport": "Lifestyle & Caregiving",
+    
+    "Apple/PC/Tablet Repair": "Technology & Electronics",
+    "Digital Photo Backup": "Technology & Electronics",
+    "Smart Home Devices": "Technology & Electronics",
+    "Smart TV & Soundbar Setup": "Technology & Electronics",
+    "Wi-Fi & Internet Troubleshooting": "Technology & Electronics",
+    
+    "Auto Mechanics": "Automotive & Golf Carts",
+    "Detailing/Car Wash": "Automotive & Golf Carts",
+    "Golf Cart Maintenance & Customization": "Automotive & Golf Carts",
+    "Towing & Tire Services": "Automotive & Golf Carts",
+    
+    "Bathroom Accessibility Remodeling": "Home Renovation & Design",
+    "Flooring & Tiling": "Home Renovation & Design",
+    "Painters (Interior/Exterior)": "Home Renovation & Design",
+    "Window & Glass Replacement": "Home Renovation & Design",
+    "Window Treatments": "Home Renovation & Design"
+  };
+
+  var count = 0;
+  for (var i = 1; i < data.length; i++) {
+    var rawService = String(data[i][serviceColIdx] || "").trim();
+    var rawCategory = String(data[i][categoryColIdx] || "").trim();
+    
+    if (!rawService) continue;
+
+    // 1. Map legacy service names
+    var services = rawService.split(",").map(function(s) { return s.trim(); });
+    var mappedServices = [];
+    for (var s = 0; s < services.length; s++) {
+      var sTrim = services[s];
+      mappedServices.push(LEGACY_SERVICE_MAP[sTrim] || sTrim);
+    }
+    var newServiceStr = mappedServices.join(", ");
+    
+    // 2. Compute categories
+    var categoriesSet = {};
+    for (var s = 0; s < mappedServices.length; s++) {
+      var sName = mappedServices[s];
+      var cat = serviceToCategoryMap[sName];
+      if (cat) {
+        categoriesSet[cat] = true;
+      } else if (sName) {
+        categoriesSet["ZZZ Other Category"] = true;
+      }
+    }
+    var categoriesArray = [];
+    for (var cKey in categoriesSet) {
+      categoriesArray.push(cKey);
+    }
+    var newCategoryStr = categoriesArray.join(", ");
+    if (categoriesArray.length === 0) {
+      newCategoryStr = rawCategory; // Fallback
+    }
+    
+    // 3. Update sheet if changed
+    if (newServiceStr !== rawService || newCategoryStr !== rawCategory) {
+      sheet.getRange(i + 1, serviceColIdx + 1).setValue(newServiceStr);
+      sheet.getRange(i + 1, categoryColIdx + 1).setValue(newCategoryStr);
+      count++;
+    }
+  }
+  
+  Logger.log("Migration complete. Updated " + count + " rows.");
+}
+
