@@ -75,21 +75,25 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Changed the Provider Portal theme from dark mode to a premium high-contrast Light Mode matching the main app.
 - [x] Styled all required input fields in the Provider Portal in red and added a bold red asterisk (`*`) to their labels.
 - [x] Incremented the PWA Service Worker cache version to `v2` to force mobile styling updates.
+- [x] Restructured category taxonomy from 4 to 6 categories and expanded the service listings (mapping all 42 services).
+- [x] Implemented multi-service support on resident registration form (checkbox-group container) and directory cards (inline tag badges).
+- [x] Added "Manage Services" checkbox dashboard card in the Provider Portal for contractors to edit their offerings.
+- [x] Built and ran Google Sheets API Python OAuth script to convert all legacy spreadsheet rows to the new taxonomy format in-place.
+- [x] Optimized Terms of Service overlay style by capping the scroll container height (`240px` / `40vh`) to guarantee visibility of the checkbox and button on mobile screens.
+- [x] Resolved mobile cached-duplicate bugs by adding `?v=3` script cache-busters and marking local sync queue drafts as `synced: true` upon successful upload.
 
 ---
 
 ## 🏁 Handover Notes & Next Steps
 1. **Current Operating State**: 
    * The main app is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/`.
-   * The **ProviderPortal PWA** is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/` in a high-contrast Light Mode.
+   * The **ProviderPortal PWA** is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/`.
    * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to GitHub Pages.
    * New registrations, rating changes, and hire counts automatically update the `ProviderList` sheet in real-time.
-   * Onboarding emails are generated successfully and sent to new providers, linking them to the portal.
-   * Logging into the portal for the first time triggers the "Claim Your Listing" screen which updates their status from `pending` to `Verified` in the sheet upon password registration.
+   * The Google Sheet categories and services columns have been fully migrated to the new taxonomy format (including mapping *Barrett AI Consulting* to the new *Technology & Electronics* services).
+   * Mobile caching and duplicate rendering bugs have been successfully resolved.
 2. **Next Steps for Next Session**:
    * Verify the provider onboarding email verification flow and claim listings in the portal.
    * Introduce resident-facing search enhancements (e.g. searching review text comments or sorting by punctuality).
    * Incorporate contractor photo uploads via Apps Script base64 sync.
-   * Add neighborhood announcement banners controlled directly from a tab in `ProviderList.gsheet`.
-
 
