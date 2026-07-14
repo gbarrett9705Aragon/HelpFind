@@ -703,6 +703,24 @@ async function processSyncQueue() {
       // Perform background fetch
       await fetch(url, { mode: 'no-cors' });
       
+      // Parse the ID of the synced vendor
+      try {
+        const urlObj = new URL(url);
+        const action = urlObj.searchParams.get('action');
+        const syncedId = urlObj.searchParams.get('id');
+        
+        if (action === 'add_provider' && syncedId) {
+          const vendors = JSON.parse(localStorage.getItem('helpfind_vendors') || '[]');
+          const vIdx = vendors.findIndex(v => v.id === syncedId);
+          if (vIdx !== -1) {
+            vendors[vIdx].synced = true;
+            localStorage.setItem('helpfind_vendors', JSON.stringify(vendors));
+          }
+        }
+      } catch (urlErr) {
+        console.warn("Failed to parse sync queue URL:", urlErr);
+      }
+      
       // Successfully processed, remove from queue
       queue.shift();
       localStorage.setItem('helpfind_sync_queue', JSON.stringify(queue));
