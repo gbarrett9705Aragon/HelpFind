@@ -3,21 +3,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-base: #cbd5e1; /* Matched to main HelpFind app body background */
+  --bg-base: #f1f5f9; /* Matched to main HelpFind app body background */
   --bg-card: #ffffff;
   --bg-input: #f8fafc;
-  --primary: #2563eb; /* Royal Blue */
+  --primary: #1e4ed8; /* Darker Royal Blue for higher contrast */
   --primary-hover: #1d4ed8;
-  --primary-glow: rgba(37, 99, 235, 0.1);
-  --accent: #4f46e5; /* Indigo accent */
-  --accent-glow: rgba(79, 70, 229, 0.1);
-  --success: #16a34a;
-  --success-glow: rgba(22, 163, 74, 0.1);
-  --warning: #b45309;
-  --danger: #dc2626; /* High-contrast red for required fields */
+  --primary-glow: rgba(30, 78, 216, 0.1);
+  --accent: #4338ca; /* Darker Indigo accent */
+  --accent-glow: rgba(67, 56, 202, 0.1);
+  --success: #15803d;
+  --success-glow: rgba(21, 128, 61, 0.1);
+  --warning: #d97706;
+  --danger: #b91c1c; /* High-contrast red for required fields */
   --text-main: #0f172a; /* Slate 900 */
-  --text-muted: #475569; /* Slate 600 */
-  --border: #cbd5e1; /* Slate 300 */
+  --text-muted: #1e293b; /* Darker Slate 800 for high-contrast senior readability */
+  --border: #94a3b8; /* Darkened Slate 400 */
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05);
@@ -87,7 +87,7 @@ header {
 }
 
 .badge-portal {
-  font-size: 0.65rem;
+  font-size: 0.75rem; /* Scaled up from 0.65rem */
   font-weight: 700;
   padding: 0.15rem 0.4rem;
   border-radius: 99px;
@@ -101,7 +101,7 @@ header {
 .offline-banner {
   background: var(--warning);
   color: #fff;
-  font-size: 0.75rem;
+  font-size: 0.85rem; /* Scaled up from 0.75rem */
   font-weight: 700;
   text-align: center;
   padding: 0.35rem;
@@ -136,7 +136,7 @@ header {
 /* Typography */
 h2 {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.75rem;
+  font-size: 1.9rem; /* Scaled up from 1.75rem */
   font-weight: 700;
   letter-spacing: -0.5px;
   line-height: 1.2;
@@ -144,14 +144,14 @@ h2 {
 
 h3 {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.15rem;
+  font-size: 1.25rem; /* Scaled up from 1.15rem */
   font-weight: 600;
   color: var(--text-main);
   margin-bottom: 0.5rem;
 }
 
 .subtitle {
-  font-size: 0.9rem;
+  font-size: 1.0rem; /* Scaled up from 0.9rem */
   color: var(--text-muted);
 }
 
@@ -203,7 +203,7 @@ h3 {
   align-items: center;
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.85rem; /* Scaled up from 0.75rem */
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -225,7 +225,7 @@ h3 {
 
 .demo-login-trigger {
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* Scaled up from 0.8rem */
   color: var(--primary);
   background: none;
   border: none;
@@ -262,7 +262,7 @@ h3 {
 }
 
 .form-group label {
-  font-size: 0.75rem;
+  font-size: 0.85rem; /* Scaled up from 0.75rem */
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -274,9 +274,9 @@ h3 {
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text-main);
-  padding: 0.75rem;
+  padding: 0.85rem; /* Increased padding */
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 1.0rem; /* Scaled to 16px to prevent mobile zoom */
   outline: none;
   width: 100%;
   cursor: pointer;
@@ -302,13 +302,13 @@ h3 {
 }
 
 .provider-name {
-  font-size: 1.35rem;
+  font-size: 1.5rem; /* Scaled up from 1.35rem */
   font-weight: 700;
   letter-spacing: -0.3px;
 }
 
 .provider-meta-badge {
-  font-size: 0.7rem;
+  font-size: 0.8rem; /* Scaled up from 0.7rem */
   font-weight: 600;
   color: var(--text-muted);
   background: rgba(0, 0, 0, 0.04);
@@ -318,7 +318,7 @@ h3 {
 }
 
 .provider-details-list {
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* Scaled up from 0.8rem */
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -363,7 +363,7 @@ h3 {
 }
 
 .metric-label {
-  font-size: 0.65rem;
+  font-size: 0.75rem; /* Scaled up from 0.65rem */
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -372,13 +372,13 @@ h3 {
 
 .metric-value {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.5rem;
+  font-size: 1.65rem; /* Scaled up from 1.5rem */
   font-weight: 800;
   color: var(--text-main);
 }
 
 .metric-subtext {
-  font-size: 0.65rem;
+  font-size: 0.75rem; /* Scaled up from 0.65rem */
   color: var(--text-muted);
   margin-top: auto;
 }
@@ -404,7 +404,7 @@ h3 {
   padding: 0.75rem;
   color: var(--text-main);
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 1.0rem; /* Scaled to 16px to prevent mobile zoom */
   line-height: 1.4;
   resize: none;
   outline: none;
@@ -469,7 +469,7 @@ h3 {
 }
 
 .recording-status {
-  font-size: 0.75rem;
+  font-size: 0.85rem; /* Scaled up from 0.75rem */
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -536,9 +536,9 @@ h3 {
 .btn {
   flex: 1;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 0.95rem; /* Scaled up from 0.85rem */
   font-weight: 600;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.25rem; /* Expanded tap targets */
   border-radius: 10px;
   border: none;
   cursor: pointer;
@@ -622,28 +622,28 @@ h3 {
 }
 
 .review-author {
-  font-size: 0.75rem;
+  font-size: 0.85rem; /* Scaled up from 0.75rem */
   font-weight: 700;
   color: var(--text-main);
 }
 
 .review-rating-stars {
   color: var(--warning);
-  font-size: 0.75rem;
+  font-size: 0.85rem; /* Scaled up from 0.75rem */
 }
 
 .review-date-cost {
   display: flex;
   justify-content: space-between;
-  font-size: 0.65rem;
+  font-size: 0.75rem; /* Scaled up from 0.65rem */
   color: var(--text-muted);
 }
 
 .review-text {
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* Scaled up from 0.8rem */
   color: var(--text-muted);
   font-style: italic;
-  line-height: 1.4;
+  line-height: 1.45;
   margin-top: 0.2rem;
 }
 
@@ -655,9 +655,9 @@ h3 {
 }
 
 .review-badge {
-  font-size: 0.6rem;
+  font-size: 0.7rem; /* Scaled up from 0.6rem */
   font-weight: 600;
-  padding: 0.1rem 0.35rem;
+  padding: 0.15rem 0.4rem;
   border-radius: 4px;
 }
 
@@ -680,7 +680,7 @@ h3 {
   border: 1px dashed var(--border);
   border-radius: 12px;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* Scaled up from 0.8rem */
 }
 
 /* User Settings/Logout Utility */
@@ -691,7 +691,7 @@ h3 {
 }
 
 .user-email-tag {
-  font-size: 0.7rem;
+  font-size: 0.8rem; /* Scaled up from 0.7rem */
   color: var(--text-muted);
   max-width: 140px;
   overflow: hidden;
@@ -703,9 +703,9 @@ h3 {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
   color: var(--danger);
-  font-size: 0.65rem;
+  font-size: 0.75rem; /* Scaled up from 0.65rem */
   font-weight: 700;
-  padding: 0.25rem 0.5rem;
+  padding: 0.35rem 0.6rem; /* Increased padding */
   border-radius: 6px;
   cursor: pointer;
   transition: var(--transition);
@@ -740,7 +740,7 @@ h3 {
   align-items: center;
   gap: 0.6rem;
   box-shadow: var(--shadow-lg);
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* Scaled up from 0.8rem */
   color: var(--text-main);
   animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   transition: opacity 0.3s, transform 0.3s;

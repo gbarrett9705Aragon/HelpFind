@@ -308,6 +308,18 @@ function filterDirectory() {
   renderVendorsList(filtered);
 }
 
+function getCategoryClass(category) {
+  if (!category) return 'cat-other';
+  const cat = category.toLowerCase();
+  if (cat.includes('repair') || cat.includes('trade')) return 'cat-repairs';
+  if (cat.includes('lawn') || cat.includes('landscap') || cat.includes('outdoor')) return 'cat-lawn';
+  if (cat.includes('lifestyle') || cat.includes('caregiving')) return 'cat-lifestyle';
+  if (cat.includes('tech') || cat.includes('electron')) return 'cat-tech';
+  if (cat.includes('auto') || cat.includes('golf')) return 'cat-automotive';
+  if (cat.includes('renovat') || cat.includes('design')) return 'cat-renovation';
+  return 'cat-other';
+}
+
 function renderVendorsList(vendors) {
   const list = document.getElementById('vendors-list');
   list.innerHTML = '';
@@ -323,18 +335,16 @@ function renderVendorsList(vendors) {
 
   vendors.forEach(v => {
     const card = document.createElement('div');
-    card.className = 'vendor-card';
+    const displayCategory = v.category && !v.category.includes(',') ? v.category : (getCategoriesForServices(v.service)[0] || v.category);
+    card.className = `vendor-card ${getCategoryClass(displayCategory)}`;
 
     const vendorServices = v.service ? v.service.split(',').map(s => s.trim()) : [];
-    const serviceBadges = vendorServices.map(s => `<span class="service-badge" style="background: rgba(15, 23, 42, 0.04); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 500;">${s}</span>`).join(' ');
-
-    // Display primary category name or first computed category
-    const displayCategory = v.category && !v.category.includes(',') ? v.category : (getCategoriesForServices(v.service)[0] || v.category);
+    const serviceBadges = vendorServices.map(s => `<span class="service-badge" style="background: rgba(15, 23, 42, 0.04); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem; padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 500;">${s}</span>`).join(' ');
 
     card.innerHTML = `
       <div class="vendor-header">
         <div class="vendor-meta">
-          <span class="vendor-category">${displayCategory}</span>
+          <span class="vendor-category ${getCategoryClass(displayCategory)}">${displayCategory}</span>
           <span class="vendor-rating">★ ${v.rating.toFixed(1)} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400;">(${v.reviewCount})</span></span>
         </div>
         <h3 class="vendor-name" style="margin-top: 0.25rem; margin-bottom: 0.25rem;">${v.name}</h3>
@@ -620,7 +630,7 @@ function openVendorModal(vendorId) {
   body.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
       <div>
-        <span class="vendor-category" style="font-size:0.7rem;">${v.category} &bull; ${v.service}</span>
+        <span class="vendor-category ${getCategoryClass(v.category)}" style="font-size:0.85rem; font-weight:700;">${v.category} &bull; ${v.service}</span>
         <h2 style="font-size:1.5rem; margin-top:0.25rem;">${v.name}</h2>
       </div>
       <div class="text-center" style="background:rgba(15,23,42,0.03); border:1px solid var(--border-color); padding:0.4rem 0.75rem; border-radius:10px;">

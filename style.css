@@ -3,25 +3,34 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+  --bg-gradient: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%); /* Brightened background */
   --bg-card: #ffffff;
   --bg-card-hover: #ffffff;
-  --primary: #2563eb; /* Royal Blue */
+  --primary: #1e4ed8; /* Darker Royal Blue for higher contrast */
   --primary-hover: #1d4ed8;
-  --secondary: #16a34a; /* Rich Green */
-  --secondary-hover: #15803d;
-  --accent: #4f46e5; /* Indigo */
-  --accent-hover: #4338ca;
+  --secondary: #15803d; /* Darker rich green */
+  --secondary-hover: #166534;
+  --accent: #4338ca; /* Darker Indigo */
+  --accent-hover: #3730a3;
   --text-main: #0f172a; /* Slate 900 */
-  --text-muted: #334155; /* Slate 700 - high contrast for seniors */
+  --text-muted: #1e293b; /* Darker Slate 800 for high-contrast senior readability */
   --text-dark: #000000;
-  --border-color: #cbd5e1; /* Slate 300 - clear borders */
-  --border-glow: rgba(37, 99, 235, 0.2);
-  --danger: #dc2626; /* Red 600 */
-  --warning: #b45309; /* Amber 700 - darker gold for readability */
+  --border-color: #94a3b8; /* Darkened from #cbd5e1 (Slate 400 instead of 300) for clearer boundaries */
+  --border-glow: rgba(30, 78, 216, 0.2);
+  --danger: #b91c1c; /* Red 700 */
+  --warning: #d97706; /* Vibrant Amber 600 */
   --glass-shadow: 0 4px 20px 0 rgba(15, 23, 42, 0.08);
   --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Vibrant category specific color codes */
+  --cat-repairs: #ea580c;
+  --cat-lawn: #16a34a;
+  --cat-lifestyle: #7c3aed;
+  --cat-tech: #2563eb;
+  --cat-automotive: #dc2626;
+  --cat-renovation: #b45309;
+  --cat-other: #475569;
 }
 
 /* Reset & Mobile Viewport Lock */
@@ -126,7 +135,7 @@ header {
 }
 
 .logo-text h1 {
-  font-size: 1.15rem;
+  font-size: 1.35rem; /* Scaled up from 1.15rem */
   font-weight: 800;
   background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
   -webkit-background-clip: text;
@@ -135,7 +144,7 @@ header {
 }
 
 .logo-text span {
-  font-size: 0.65rem;
+  font-size: 0.8rem; /* Scaled up from 0.65rem */
   color: var(--primary);
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -151,9 +160,9 @@ header {
   background: rgba(15, 23, 42, 0.06);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 0.45rem 1.75rem 0.45rem 0.75rem;
+  padding: 0.55rem 1.85rem 0.55rem 0.85rem;
   border-radius: 8px;
-  font-size: 0.85rem;
+  font-size: 1rem; /* Scaled to 16px to prevent mobile zoom */
   font-weight: 600;
   outline: none;
   cursor: pointer;
@@ -229,9 +238,9 @@ header {
   background: #ffffff;
   border: 1.5px solid var(--border-color);
   color: var(--text-main);
-  padding: 0.65rem 1rem 0.65rem 2.25rem;
+  padding: 0.75rem 1rem 0.75rem 2.25rem;
   border-radius: 10px;
-  font-size: 0.9rem;
+  font-size: 1rem; /* Scaled to 16px to prevent mobile zoom */
   outline: none;
   font-family: inherit;
   transition: var(--transition-fast);
@@ -247,9 +256,9 @@ header {
   background: #ffffff;
   border: 1.5px solid var(--border-color);
   color: var(--text-main);
-  padding: 0.65rem 1rem;
+  padding: 0.75rem 1rem;
   border-radius: 10px;
-  font-size: 0.9rem;
+  font-size: 1rem; /* Scaled to 16px to prevent mobile zoom */
   outline: none;
   font-family: inherit;
   cursor: pointer;
@@ -270,9 +279,9 @@ header {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-color);
   color: var(--text-muted);
-  padding: 0.4rem 0.85rem;
+  padding: 0.45rem 0.95rem;
   border-radius: 20px;
-  font-size: 0.75rem;
+  font-size: 0.85rem; /* Scaled up from 0.75rem */
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-fast);
@@ -296,6 +305,7 @@ header {
 .vendor-card {
   background: var(--bg-card);
   border: 1.5px solid var(--border-color);
+  border-top: 4px solid var(--border-color); /* Colored top-border matching category */
   border-radius: 16px;
   padding: 1.25rem 1rem;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
@@ -307,6 +317,14 @@ header {
   gap: 0.65rem;
 }
 
+.vendor-card.cat-repairs { border-top-color: var(--cat-repairs); }
+.vendor-card.cat-lawn { border-top-color: var(--cat-lawn); }
+.vendor-card.cat-lifestyle { border-top-color: var(--cat-lifestyle); }
+.vendor-card.cat-tech { border-top-color: var(--cat-tech); }
+.vendor-card.cat-automotive { border-top-color: var(--cat-automotive); }
+.vendor-card.cat-renovation { border-top-color: var(--cat-renovation); }
+.vendor-card.cat-other { border-top-color: var(--cat-other); }
+
 .vendor-card:hover {
   border-color: var(--primary);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
@@ -315,6 +333,7 @@ header {
 
 .vendor-card.premium {
   border: 1.5px solid var(--primary);
+  border-top: 4px solid var(--primary);
   background: linear-gradient(180deg, rgba(6, 182, 212, 0.04) 0%, rgba(30, 41, 59, 0.7) 100%);
 }
 
@@ -336,19 +355,25 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-right: 4rem; /* keep clear of premium badge */
 }
 
 .vendor-category {
-  color: var(--primary);
-  font-size: 0.7rem;
+  font-size: 0.85rem; /* Scaled up from 0.7rem */
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
+.vendor-category.cat-repairs { color: var(--cat-repairs); }
+.vendor-category.cat-lawn { color: var(--cat-lawn); }
+.vendor-category.cat-lifestyle { color: var(--cat-lifestyle); }
+.vendor-category.cat-tech { color: var(--cat-tech); }
+.vendor-category.cat-automotive { color: var(--cat-automotive); }
+.vendor-category.cat-renovation { color: var(--cat-renovation); }
+.vendor-category.cat-other { color: var(--cat-other); }
+
 .vendor-rating {
-  font-size: 0.8rem;
+  font-size: 0.95rem; /* Scaled up from 0.8rem */
   font-weight: 700;
   color: var(--warning);
   display: flex;
@@ -357,19 +382,19 @@ header {
 }
 
 .vendor-name {
-  font-size: 1.15rem;
+  font-size: 1.3rem; /* Scaled up from 1.15rem */
   font-weight: 700;
   line-height: 1.2;
 }
 
 .vendor-desc {
-  font-size: 0.85rem;
+  font-size: 0.95rem; /* Scaled up from 0.85rem */
   color: var(--text-muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .vendor-tags {
@@ -379,8 +404,8 @@ header {
 }
 
 .vendor-tag {
-  font-size: 0.7rem;
-  padding: 0.2rem 0.45rem;
+  font-size: 0.8rem; /* Scaled up from 0.7rem */
+  padding: 0.25rem 0.5rem;
   border-radius: 6px;
   font-weight: 500;
 }
@@ -459,9 +484,9 @@ header {
   background: rgba(16, 185, 129, 0.08);
   border: 1px solid rgba(16, 185, 129, 0.15);
   color: var(--secondary);
-  font-size: 0.75rem;
+  font-size: 0.85rem; /* Scaled up from 0.75rem */
   font-weight: 700;
-  padding: 0.25rem 0.5rem;
+  padding: 0.3rem 0.6rem;
   border-radius: 20px;
   margin-top: 0.35rem;
   width: fit-content;
@@ -483,11 +508,11 @@ header {
 }
 
 .form-title-block h2 {
-  font-size: 1.35rem;
+  font-size: 1.5rem; /* Scaled up from 1.35rem */
 }
 
 .form-title-block p {
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* Scaled up from 0.8rem */
   color: var(--text-muted);
 }
 
@@ -498,7 +523,7 @@ header {
 .form-group label {
   display: block;
   margin-bottom: 0.35rem;
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* Scaled up from 0.8rem */
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -508,8 +533,8 @@ header {
   background: #ffffff;
   border: 1.5px solid var(--border-color);
   color: var(--text-main);
-  padding: 0.65rem 0.85rem;
-  font-size: 0.9rem;
+  padding: 0.75rem 0.95rem;
+  font-size: 1rem; /* Scaled to 16px to prevent mobile zoom */
   border-radius: 8px;
   outline: none;
   font-family: inherit;
@@ -637,7 +662,7 @@ header {
   align-items: center;
   gap: 0.5rem;
   color: var(--text-main);
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* Scaled up from 0.8rem */
   animation: slideInUp 0.25s ease-out;
 }
 
@@ -719,7 +744,7 @@ header {
 }
 
 .form-hint {
-  font-size: 0.7rem;
+  font-size: 0.8rem; /* Scaled up from 0.7rem */
   color: var(--text-muted);
   display: block;
 }
@@ -876,14 +901,14 @@ textarea.form-input {
   background: #f8fafc;
   overflow-y: scroll; /* Force vertical scrollbar */
   text-align: left;
-  font-size: 0.85rem;
+  font-size: 0.95rem; /* Scaled up from 0.85rem */
   line-height: 1.5;
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
 .terms-scroll-box h3 {
-  font-size: 0.95rem;
+  font-size: 1.05rem; /* Scaled up from 0.95rem */
   font-weight: 700;
   color: var(--text-main);
   margin-top: 1rem;
