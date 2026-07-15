@@ -81,6 +81,9 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Built and ran Google Sheets API Python OAuth script to convert all legacy spreadsheet rows to the new taxonomy format in-place.
 - [x] Optimized Terms of Service overlay style by capping the scroll container height (`240px` / `40vh`) to guarantee visibility of the checkbox and button on mobile screens.
 - [x] Resolved mobile cached-duplicate bugs by adding `?v=3` script cache-busters and marking local sync queue drafts as `synced: true` upon successful upload.
+- [x] Brightened background contrast and scaled up font sizes across main directory and Provider Portal to improve readability for senior citizens.
+- [x] Prevented mobile viewport auto-zooming by raising all select/input fields to a minimum of 1rem (16px).
+- [x] Introduced category-specific visual color stripes and highlights on directory cards.
 
 ---
 
