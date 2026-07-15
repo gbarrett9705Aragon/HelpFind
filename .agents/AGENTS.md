@@ -85,6 +85,7 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Prevented mobile viewport auto-zooming by raising all select/input fields to a minimum of 1rem (16px).
 - [x] Introduced category-specific visual color stripes and highlights on directory cards.
 - [x] Aligned Provider Portal PWA typography (Inter font), header logo section, and simulated desktop device bezel wrapper to match the main HelpFind app.
+- [x] Removed Developer Demo Credentials from the Provider Portal UI to finalize the production login experience.
 
 ---
 
