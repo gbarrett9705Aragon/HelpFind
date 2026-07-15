@@ -95,9 +95,12 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
    * The **ProviderPortal PWA** is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/`.
    * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to GitHub Pages.
    * New registrations, rating changes, and hire counts automatically update the `ProviderList` sheet in real-time.
-   * The Google Sheet categories and services columns have been fully migrated to the new taxonomy format (including mapping *Barrett AI Consulting* to the new *Technology & Electronics* services).
    * Mobile caching and duplicate rendering bugs have been successfully resolved.
+   * **Senior Accessibility Improvements (This Session)**: scaled up body, title, button, and badge font sizes; brightened the mobile background gradient (`#ffffff` to `#f1f5f9`); darkened border/text colors for higher contrast; raised input fields to `1rem` ($16\text{px}$) to prevent mobile browser layout auto-zooming.
+   * **Category Visual Accents (This Session)**: implemented colored top borders on directory cards and category text tags matching the 6-category taxonomy.
+   * **PWA Layout Alignment & Cleanup (This Session)**: updated the Provider Portal PWA to match the main HelpFind app's visual structure, typography (Inter/Outfit), and simulated mobile device bezel frame on desktop; removed Developer Demo Credentials from the PWA login screen to finalize production onboarding.
 2. **Next Steps for Next Session**:
+   * **[ToDo - Security Gate]**: Address the edge case where a user is both a resident and a provider... they should not be able to write a review of their own service (e.g. check submitter's input email or local device UUID signatures against the target provider's record).
    * Verify the provider onboarding email verification flow and claim listings in the portal.
    * Introduce resident-facing search enhancements (e.g. searching review text comments or sorting by punctuality).
    * Incorporate contractor photo uploads via Apps Script base64 sync.
