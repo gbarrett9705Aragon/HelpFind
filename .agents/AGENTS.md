@@ -84,6 +84,7 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Brightened background contrast and scaled up font sizes across main directory and Provider Portal to improve readability for senior citizens.
 - [x] Prevented mobile viewport auto-zooming by raising all select/input fields to a minimum of 1rem (16px).
 - [x] Introduced category-specific visual color stripes and highlights on directory cards.
+- [x] Aligned Provider Portal PWA typography (Inter font), header logo section, and simulated desktop device bezel wrapper to match the main HelpFind app.
 
 ---
 
