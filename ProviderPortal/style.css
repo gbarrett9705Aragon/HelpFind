@@ -1,6 +1,6 @@
 /* style.css - Premium Dashboard Design for ProviderPortal PWA */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
   --bg-base: #f1f5f9; /* Matched to main HelpFind app body background */
@@ -32,35 +32,38 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--bg-base);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #cbd5e1; /* Matched to main HelpFind simulator bg */
   color: var(--text-main);
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  overflow-x: hidden;
+  overflow: hidden;
   line-height: 1.5;
 }
 
-/* App Container */
+/* App Container (Simulates mobile on desktop, native on mobile) */
 #app-container {
   width: 100%;
-  max-width: 480px; /* Mobile-first constraint */
-  min-height: 100vh;
+  max-width: 420px; /* Matched to main HelpFind */
+  height: 92vh; /* Matched to main HelpFind */
+  max-height: 860px; /* Matched to main HelpFind */
+  background: var(--bg-gradient);
+  border: 8px solid #64748b; /* Matched to main HelpFind */
+  border-radius: 40px; /* Matched to main HelpFind */
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.3), 0 0 0 2px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+  position: relative;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-base);
-  position: relative;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
 }
 
 header {
-  padding: 1.25rem 1.5rem;
+  padding: 0.85rem 1rem; /* Matched to main HelpFind */
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -68,33 +71,44 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
-.brand {
+.logo-section {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.brand h1 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.logo-icon {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 1rem;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.25);
 }
 
-.badge-portal {
-  font-size: 0.75rem; /* Scaled up from 0.65rem */
-  font-weight: 700;
-  padding: 0.15rem 0.4rem;
-  border-radius: 99px;
-  background: rgba(168, 85, 247, 0.15);
-  color: var(--accent);
-  border: 1px solid rgba(168, 85, 247, 0.3);
+.logo-text h1 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.1;
+}
+
+.logo-text span {
+  font-size: 0.8rem;
+  color: var(--primary);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  display: block;
 }
 
 /* Offline Banner */
@@ -122,6 +136,7 @@ header {
   flex-direction: column;
   gap: 1.5rem;
   animation: fadeIn 0.4s ease-out;
+  overflow-y: auto; /* Enable vertical scrolling */
 }
 
 .hidden {
@@ -844,4 +859,18 @@ h3 {
   content: " *";
   color: var(--danger);
   font-weight: bold;
+}
+
+/* Mobile Frame Simulation on Mobile Resolutions */
+@media (max-width: 480px) {
+  body {
+    align-items: stretch;
+  }
+  #app-container {
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100%;
+    border: none;
+    border-radius: 0;
+  }
 }
