@@ -439,9 +439,6 @@ function handleRequest(e) {
     }
     
     if (params.action === "add_provider") {
-      if (params.pin !== CORRECT_PIN) {
-        return createJSONResponse({ status: "error", message: "Unauthorized: Invalid Community PIN" });
-      }
       if (rowIdx !== -1) {
         return createJSONResponse({ status: "error", message: "Provider ID already exists" });
       }
@@ -505,9 +502,6 @@ function handleRequest(e) {
     }
     
     if (params.action === "rate") {
-      if (params.pin !== CORRECT_PIN) {
-        return createJSONResponse({ status: "error", message: "Unauthorized: Invalid Community PIN" });
-      }
       if (rowIdx === -1) {
         return createJSONResponse({ status: "error", message: "Provider ID not found" });
       }
@@ -527,6 +521,52 @@ function handleRequest(e) {
       logReviewToSheet(params, providerId);
       
       return createJSONResponse({ status: "success", rating: nextRating, reviewCount: nextCount });
+    }
+
+    if (params.action === "refer_provider") {
+      var referralsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Referrals");
+      if (!referralsSheet) {
+        referralsSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Referrals");
+        referralsSheet.appendRow(["Referral ID", "Timestamp", "Resident Name", "Resident Email", "Provider Name", "Category", "Services", "Phone", "Email", "Reason for Referral", "Status"]);
+        referralsSheet.getRange("A1:K1").setFontWeight("bold");
+        referralsSheet.setFrozenRows(1);
+      }
+      referralsSheet.appendRow([
+        params.id || ("ref_" + Date.now()),
+        new Date().toISOString(),
+        params.residentName || "",
+        params.residentEmail || "",
+        params.name || "",
+        params.category || "",
+        params.service || "",
+        params.phone || "",
+        params.email || "",
+        params.comment || "",
+        "Pending"
+      ]);
+      return createJSONResponse({ status: "success", message: "Provider referral logged successfully" });
+    }
+
+    if (params.action === "report_issue") {
+      var issuesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("ReportedIssues");
+      if (!issuesSheet) {
+        issuesSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("ReportedIssues");
+        issuesSheet.appendRow(["Report ID", "Timestamp", "Resident Name", "Resident Email", "Provider ID", "Provider Name", "Issue Type", "Description", "Status"]);
+        issuesSheet.getRange("A1:I1").setFontWeight("bold");
+        issuesSheet.setFrozenRows(1);
+      }
+      issuesSheet.appendRow([
+        params.id || ("rep_" + Date.now()),
+        new Date().toISOString(),
+        params.residentName || "",
+        params.residentEmail || "",
+        params.vendorId || "",
+        params.vendorName || "",
+        params.issueType || "",
+        params.description || "",
+        "Pending"
+      ]);
+      return createJSONResponse({ status: "success", message: "Issue report logged successfully" });
     }
 
     if (params.action === "consent") {

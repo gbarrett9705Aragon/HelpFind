@@ -1,18 +1,39 @@
-// test.js - Automated integration test for HelpFind review flow
+// test.js - Automated integration test for HelpFind curation flow
 (function() {
   if (!location.search.includes('run-tests=true')) return;
 
+  window.onerror = function(message, source, lineno, colno, error) {
+    logToRunner(`UNCAUGHT EXCEPTION: ${message} at ${source}:${lineno}:${colno}`, true);
+  };
+
+  // Mock navigator.onLine to test sync queue
+  let mockOnline = false;
+  try {
+    Object.defineProperty(navigator, 'onLine', {
+      get: () => mockOnline,
+      configurable: true
+    });
+  } catch (e) {
+    console.warn("Could not redefine navigator.onLine:", e);
+  }
+
   const originalFetch = window.fetch;
   window.fetch = async function(url, options) {
-    if (typeof url === 'string' && url.includes('action=verify_pin')) {
-      const pin = new URLSearchParams(url.split('?')[1]).get('pin');
-      if (pin === 'SCP2') {
-        return new Response(JSON.stringify({ status: 'success' }), {
+    if (typeof url === 'string') {
+      if (url.includes('api.ipify.org')) {
+        return new Response(JSON.stringify({ ip: '192.168.1.1' }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
-      } else {
-        return new Response(JSON.stringify({ status: 'error', message: 'Invalid PIN' }), {
+      }
+      if (url.includes('action=get_terms')) {
+        return new Response(JSON.stringify({ status: 'success', terms: 'HelpFind Terms\n\n1. Community Directory\n\nThis is a private directory.' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (url.includes('action=refer_provider') || url.includes('action=report_issue') || url.includes('action=consent')) {
+        return new Response(JSON.stringify({ status: 'success' }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
@@ -80,182 +101,147 @@
       
       // 1. Initial State Check
       const viewDir = document.getElementById('view-directory');
-      const viewAdd = document.getElementById('view-add-review');
-      const pinModal = document.getElementById('pin-modal');
+      const viewRefer = document.getElementById('view-refer-provider');
+      const viewReport = document.getElementById('view-report-issue');
       
       if (viewDir.classList.contains('hidden')) {
         throw new Error("Initial view is not directory");
       }
-      if (!viewAdd.classList.contains('hidden')) {
-        throw new Error("Add review view is visible initially");
+      if (!viewRefer.classList.contains('hidden')) {
+        throw new Error("Refer provider view is visible initially");
       }
-      if (!pinModal.classList.contains('hidden')) {
-        throw new Error("PIN modal is visible initially");
+      if (!viewReport.classList.contains('hidden')) {
+        throw new Error("Report issue view is visible initially");
       }
       
       logToRunner("SUCCESS: Initial view states verified.");
       
-      // 2. Select 'Leave Review' from dropdown
+      // 2. Select 'Refer Provider' from dropdown
       const navDropdown = document.getElementById('nav-provider-dropdown');
-      navDropdown.value = 'leave-review';
+      navDropdown.value = 'refer-provider';
       handleProviderDropdownChange();
       
       await wait(500);
       
-      // 3. Verify PIN modal is visible
-      if (pinModal.classList.contains('hidden')) {
-        throw new Error("PIN modal did not open after selecting Leave Review");
+      // 3. Verify it routed directly to Refer Provider form view
+      if (viewRefer.classList.contains('hidden')) {
+        throw new Error("Did not switch to Refer Provider view immediately");
       }
-      logToRunner("SUCCESS: PIN modal opened.");
+      logToRunner("SUCCESS: Routed directly to Refer Provider view.");
       
-      // 4. Enter incorrect PIN first to test failure
-      const pinInput = document.getElementById('community-pin-input');
-      pinInput.value = '9999';
-      verifyCommunityPIN();
+      // 4. Fill and submit Refer Provider form
+      document.getElementById('refer-resident-name').value = "Gregory Barrett";
+      document.getElementById('refer-resident-email').value = "greg@suncity.com";
+      document.getElementById('refer-vendor-name').value = "Water Wise Irrigation";
+      document.getElementById('refer-vendor-category').value = "Lawn, Landscaping & Outdoors";
+      handleReferCategoryChange();
       
-      const verifyBtn = document.querySelector('#pin-modal .btn-primary');
-      let elapsedIncorrect = 0;
-      while (verifyBtn.disabled && elapsedIncorrect < 6000) {
-        await wait(200);
-        elapsedIncorrect += 200;
+      // Select the first service type checkbox
+      const srvCheckbox = document.querySelector('input[name="refer-vendor-services-checkbox"]');
+      if (!srvCheckbox) {
+        throw new Error("Service checkbox was not dynamically generated");
       }
+      srvCheckbox.checked = true;
       
-      if (pinModal.classList.contains('hidden') || isPinVerified) {
-        throw new Error("PIN modal closed or isPinVerified set to true with incorrect PIN");
-      }
-      logToRunner("SUCCESS: Incorrect PIN rejected.");
+      document.getElementById('refer-vendor-phone').value = "(404) 555-9392";
+      document.getElementById('refer-vendor-email').value = "waterwise@gmail.com";
+      document.getElementById('refer-comment').value = "Fixed my backyard sprinkler system. Prompt and highly professional!";
       
-      // 5. Enter correct PIN
-      pinInput.value = 'SCP2';
-      verifyCommunityPIN();
-      
-      let elapsedCorrect = 0;
-      while (!isPinVerified && elapsedCorrect < 6000) {
-        await wait(200);
-        elapsedCorrect += 200;
-      }
-      
-      // 6. Verify PIN modal is closed, and view has switched to add-review
-      if (!pinModal.classList.contains('hidden')) {
-        throw new Error("PIN modal did not close after correct PIN");
-      }
-      if (viewAdd.classList.contains('hidden')) {
-        throw new Error("View did not switch to Add Review after PIN verification");
-      }
-      logToRunner("SUCCESS: PIN verified and view switched to Add Review.");
-      
-      // 7. Verify select contractor dropdown is populated
-      const vendorSelect = document.getElementById('rev-vendor-select');
-      if (vendorSelect.options.length <= 2) {
-        throw new Error("Vendor select dropdown not populated");
-      }
-      logToRunner(`SUCCESS: Vendor dropdown populated with ${vendorSelect.options.length} options.`);
-      
-      // 8. Select first contractor, fill out new fields, and rate 4 stars
-      vendorSelect.value = 'v1'; // Dave's Patient Tech Support
-      setStarRating(4);
-      document.getElementById('rev-comment').value = "Great tech helper! Dave resolved my router issues.";
-      document.getElementById('rev-cost').value = "150";
-      document.getElementById('rev-punctual').checked = true;
-      
-      // Submit the review
-      const form = document.getElementById('form-add-review');
-      const submitEvent = new Event('submit', { cancelable: true });
-      form.dispatchEvent(submitEvent);
+      const referForm = document.getElementById('form-refer-provider');
+      referForm.dispatchEvent(new Event('submit', { cancelable: true }));
       
       await wait(500);
       
-      // 9. Verify redirection back to directory and rating update
-      if (!viewAdd.classList.contains('hidden')) {
-        throw new Error("Did not redirect back to directory after review submission");
+      // 5. Verify redirection back to directory and sync queue update
+      if (!viewRefer.classList.contains('hidden')) {
+        throw new Error("Did not redirect back to directory after submitting referral");
       }
-      logToRunner("SUCCESS: Redirected back to directory after submission.");
       
-      // Check if new review was added to localStorage
-      const reviews = JSON.parse(localStorage.getItem('helpfind_reviews') || '[]');
-      const lastReview = reviews[reviews.length - 1];
-      if (!lastReview || lastReview.vendorId !== 'v1' || lastReview.rating !== 4) {
-        throw new Error("New review not saved to localStorage correctly");
+      let queue = JSON.parse(localStorage.getItem('helpfind_sync_queue') || '[]');
+      let lastSyncItem = queue[queue.length - 1];
+      if (!lastSyncItem || !lastSyncItem.includes('action=refer_provider')) {
+        throw new Error("Referral action was not added to the background sync queue");
       }
-      if (lastReview.comment !== "Great tech helper! Dave resolved my router issues." || lastReview.cost !== 150 || !lastReview.punctual) {
-        throw new Error("New review details (comment, cost, punctual) not saved correctly");
+      if (!lastSyncItem.includes('name=Water%20Wise%20Irrigation') || !lastSyncItem.includes('residentName=Gregory%20Barrett')) {
+        throw new Error("Referral sync URL does not contain correct parameters");
       }
-      logToRunner("SUCCESS: New review details saved to localStorage successfully.");
+      logToRunner("SUCCESS: Refer Provider submission saved to sync queue and view redirected.");
 
-      // Check if vendor scores recalculated correctly
-      const vendorsBeforeReg = JSON.parse(localStorage.getItem('helpfind_vendors') || '[]');
-      const v1Vendor = vendorsBeforeReg.find(v => v.id === 'v1');
-      if (v1Vendor.rating !== 4.5 || v1Vendor.reviewCount !== 2 || v1Vendor.punctualityScore !== 100 || v1Vendor.minJobCost !== 50) {
-        throw new Error(`v1 vendor scores not recalculated correctly: rating=${v1Vendor.rating}, reviewCount=${v1Vendor.reviewCount}, punctualityScore=${v1Vendor.punctualityScore}, minJobCost=${v1Vendor.minJobCost}`);
-      }
-      logToRunner("SUCCESS: Existing vendor scores recalculated correctly (rating, punctuality, minJobCost).");
-      
-      // 10. Test "Add New" (registering a new contractor)
-      navDropdown.value = 'add-new';
+      // 6. Select 'Report Issue' from dropdown
+      navDropdown.value = 'report-issue';
       handleProviderDropdownChange();
       
       await wait(500);
       
-      if (viewAdd.classList.contains('hidden')) {
-        throw new Error("Did not switch to Add Review after selecting Add New");
+      // 7. Verify report issue form populated options
+      if (viewReport.classList.contains('hidden')) {
+        throw new Error("Did not switch to Report Issue view immediately");
       }
-      
-      const newFields = document.getElementById('new-vendor-fields');
-      if (newFields.classList.contains('hidden')) {
-        throw new Error("New contractor details block is hidden in Add New mode");
+      const vendorSelect = document.getElementById('report-vendor-select');
+      if (vendorSelect.options.length <= 1) {
+        throw new Error("Report provider select dropdown is empty or not populated");
       }
-      
-      document.getElementById('new-vendor-name').value = "Grady";
-      document.getElementById('new-vendor-category').value = "Home Repairs & Trades";
-      handleNewVendorCategoryChange();
-      
-      const cb = document.querySelector('input[name="new-vendor-services-checkbox"][value="Handymen"]');
-      if (!cb) throw new Error("Handymen checkbox not found after category change");
-      cb.checked = true;
+      logToRunner("SUCCESS: Report Issue view loaded with vendor dropdown list.");
 
-      document.getElementById('new-vendor-phone').value = "(555) 777-8888";
-      document.getElementById('new-vendor-email').value = "grady@suncity.com";
-      document.getElementById('rev-comment').value = "Grady did an excellent job setting up my smart TV.";
-      document.getElementById('rev-cost').value = "50";
-      document.getElementById('rev-punctual').checked = false; // test false punctuality
-      setStarRating(5);
+      // 8. Fill and submit Report Issue form
+      document.getElementById('report-resident-name').value = "Gregory Barrett";
+      document.getElementById('report-resident-email').value = "greg@suncity.com";
+      vendorSelect.value = "general"; // select general directory issue
+      document.getElementById('report-type').value = "Incorrect contact info";
+      document.getElementById('report-description').value = "Dave's Patient Tech Support changed phone number. Update needed.";
       
-      // Submit the form
-      form.dispatchEvent(new Event('submit', { cancelable: true }));
+      const reportForm = document.getElementById('form-report-issue');
+      reportForm.dispatchEvent(new Event('submit', { cancelable: true }));
       
       await wait(500);
       
-      // Verify redirection and new provider data
-      if (!viewAdd.classList.contains('hidden')) {
-        throw new Error("Did not redirect back to directory after new vendor submission");
+      // 9. Verify redirection back to directory and sync queue update
+      if (!viewReport.classList.contains('hidden')) {
+        throw new Error("Did not redirect back to directory after submitting report");
       }
       
-      const vendors = JSON.parse(localStorage.getItem('helpfind_vendors') || '[]');
-      const addedVendor = [...vendors].reverse().find(v => v.name === "Grady");
-      if (!addedVendor) {
-        throw new Error("New vendor 'Grady' was not saved to localStorage");
+      queue = JSON.parse(localStorage.getItem('helpfind_sync_queue') || '[]');
+      lastSyncItem = queue[queue.length - 1];
+      if (!lastSyncItem || !lastSyncItem.includes('action=report_issue')) {
+        throw new Error("Report issue action was not added to the background sync queue");
       }
+      if (!lastSyncItem.includes('vendorId=general') || !lastSyncItem.includes('issueType=Incorrect%20contact%20info')) {
+        throw new Error("Report issue sync URL does not contain correct parameters");
+      }
+      logToRunner("SUCCESS: Report Issue submission saved to sync queue and view redirected.");
+      
+      // 10. Verify sync processing occurs when going online
+      mockOnline = true;
+      await processSyncQueue();
+      await wait(500);
+      
+      queue = JSON.parse(localStorage.getItem('helpfind_sync_queue') || '[]');
+      if (queue.length !== 0) {
+        throw new Error("Sync queue was not cleared after going online: " + JSON.stringify(queue));
+      }
+      logToRunner("SUCCESS: Sync queue successfully processed and cleared online.");
 
-      if (addedVendor.timesUsed !== 1) {
-        throw new Error(`New vendor 'timesUsed' is ${addedVendor.timesUsed}, expected 1`);
+      // 11. Verify that rating stars and rating counts are hidden from provider cards
+      const testCard = document.querySelector('.vendor-card');
+      if (testCard) {
+        const text = testCard.innerText;
+        if (text.includes('★') || /\(\d+\)/.test(text) || text.includes('Rating')) {
+          throw new Error("Rating stars, rating scores, or review counts are visible on provider card: " + text);
+        }
       }
-      if (addedVendor.email !== "grady@suncity.com") {
-        throw new Error(`New vendor 'email' is ${addedVendor.email}, expected grady@suncity.com`);
-      }
-      if (addedVendor.minJobCost !== 50) {
-        throw new Error(`New vendor 'minJobCost' is ${addedVendor.minJobCost}, expected 50`);
-      }
-      if (addedVendor.punctualityScore !== 0) {
-        throw new Error(`New vendor 'punctualityScore' is ${addedVendor.punctualityScore}, expected 0`);
-      }
-      if (addedVendor.category !== "Home Repairs & Trades") {
-        throw new Error(`New vendor 'category' is ${addedVendor.category}, expected Home Repairs & Trades`);
-      }
-      if (addedVendor.service !== "Handymen") {
-        throw new Error(`New vendor 'service' is ${addedVendor.service}, expected Handymen`);
-      }
-      logToRunner("SUCCESS: New contractor 'Grady' successfully registered with initial timesUsed = 1, actual email, and correct score initialization.");
+      logToRunner("SUCCESS: Star ratings verified hidden from directory card lists.");
       
+      // 12. Verify that details modal hides rating info
+      // Open modal
+      openVendorModal('v1');
+      await wait(200);
+      const modalBody = document.getElementById('modal-vendor-body');
+      if (modalBody.innerText.includes('Ratings') || modalBody.innerText.includes('Punctuality') || modalBody.innerText.includes('Community Ratings History')) {
+        throw new Error("Ratings summary, punctuality score, or reviews history found in details modal: " + modalBody.innerHTML);
+      }
+      closeVendorModal();
+      logToRunner("SUCCESS: Details modal verified free of public Yelp-style ratings and reviews.");
+
       logToRunner("[TEST_RESULT] ALL TESTS PASSED SUCCESSFULLY!");
     } catch (err) {
       logToRunner("[TEST_RESULT] TEST FAILED: " + err.message, true);

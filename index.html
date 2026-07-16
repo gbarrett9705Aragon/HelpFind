@@ -38,8 +38,8 @@
             <div id="sync-status" class="sync-status-indicator synced" title="Synced with Sheets"></div>
             <select id="nav-provider-dropdown" class="provider-dropdown-nav" onchange="handleProviderDropdownChange()">
               <option value="choose" selected>Provider</option>
-              <option value="leave-review">Leave Review</option>
-              <option value="add-new">Add New</option>
+              <option value="report-issue">Report Issue</option>
+              <option value="refer-provider">Refer Provider</option>
             </select>
           </div>
         </div>
@@ -82,112 +82,144 @@
 
         </section>
 
-        <!-- VIEW 2: RECOMMENDATION FORM (Tap rating and Registration) -->
-        <section id="view-add-review" class="view-panel hidden">
+        <!-- VIEW 2: REFER PROVIDER FORM -->
+        <section id="view-refer-provider" class="view-panel hidden">
           <div class="form-container-mobile">
             <div class="form-title-block">
-              <h2>Recommend a Provider</h2>
-              <p>Verify by tapping stars below.</p>
+              <h2>Refer a Provider</h2>
+              <p>Suggest adding a new service provider.</p>
             </div>
 
-            <form id="form-add-review">
+            <form id="form-refer-provider">
+              <!-- Resident Submitter Details -->
+              <div class="form-group">
+                <label for="refer-resident-name">Your Name <span style="color: red;">*</span></label>
+                <input type="text" id="refer-resident-name" class="form-input" placeholder="e.g. Jane Doe" required>
+              </div>
+
+              <div class="form-group">
+                <label for="refer-resident-email">Your Email <span style="color: red;">*</span></label>
+                <input type="email" id="refer-resident-email" class="form-input" placeholder="e.g. jane@suncity.com" required>
+              </div>
+
+              <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--border-color);">
+
+              <!-- Contractor Details -->
+              <div class="form-group">
+                <label for="refer-vendor-name">Business Name <span style="color: red;">*</span></label>
+                <input type="text" id="refer-vendor-name" class="form-input" placeholder="e.g. Jack's Plumbing" required>
+              </div>
               
-              <!-- Contractor Selector -->
-              <div class="form-group" id="rev-select-wrapper">
-                <label for="rev-vendor-select">Select Contractor</label>
-                <select id="rev-vendor-select" class="form-input" onchange="toggleNewVendorFields()" required>
+              <div class="form-group">
+                <label for="refer-vendor-category">Service Category <span style="color: red;">*</span></label>
+                <select id="refer-vendor-category" class="form-input" onchange="handleReferCategoryChange()" required>
+                  <option value="" disabled selected>-- Select Category --</option>
+                  <option value="Home Repairs & Trades">Home Repairs & Trades</option>
+                  <option value="Lawn, Landscaping & Outdoors">Lawn, Landscaping & Outdoors</option>
+                  <option value="Lifestyle & Caregiving">Lifestyle & Caregiving</option>
+                  <option value="Technology & Electronics">Technology & Electronics</option>
+                  <option value="Automotive & Golf Carts">Automotive & Golf Carts</option>
+                  <option value="Home Renovation & Design">Home Renovation & Design</option>
+                  <option value="ZZZ Other Category">ZZZ Other Category</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Service Types (Select all that apply) <span style="color: red;">*</span></label>
+                <div id="refer-vendor-services-container" class="checkbox-group-container" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; background: var(--bg-card); display: flex; flex-direction: column; gap: 0.5rem;">
+                  <p class="text-muted" style="font-size: 0.8rem; margin: 0; padding: 0.25rem;">Please select a category first.</p>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="refer-vendor-phone">Phone Number</label>
+                <input type="tel" id="refer-vendor-phone" class="form-input" placeholder="e.g. (555) 928-1122" pattern="\(\d{3}\) \d{3}-\d{4}" title="Expected format: (555) 555-5555">
+                <span class="form-hint mt-2">Expected format: (555) 555-5555</span>
+              </div>
+
+              <div class="form-group">
+                <label for="refer-vendor-email">Email Address</label>
+                <input type="email" id="refer-vendor-email" class="form-input" placeholder="e.g. contact@business.com">
+              </div>
+
+              <div class="form-group">
+                <label for="refer-comment">Reason for Referral / Comments <span style="color: red;">*</span></label>
+                <textarea id="refer-comment" class="form-input" placeholder="Describe why you are recommending this provider..." rows="3" required></textarea>
+              </div>
+
+              <p class="terms-reaffirmation-text" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1.25rem; margin-bottom: 0.75rem; text-align: center; line-height: 1.3;">
+                By submitting this referral, you reaffirm your agreement to our <a href="#" onclick="showTermsModalFromForm(event)" style="color: var(--primary); text-decoration: underline;">Terms of Service</a>.
+              </p>
+
+              <div class="mobile-form-actions">
+                <button type="button" class="btn btn-secondary" onclick="cancelReferral()">Cancel</button>
+                <button type="submit" class="btn btn-success">Submit Referral</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- VIEW 6: REPORT ISSUE FORM -->
+        <section id="view-report-issue" class="view-panel hidden">
+          <div class="form-container-mobile">
+            <div class="form-title-block">
+              <h2>Report an Issue</h2>
+              <p>Submit private feedback to the HelpFind Admin.</p>
+            </div>
+
+            <form id="form-report-issue">
+              <!-- Resident Submitter Details -->
+              <div class="form-group">
+                <label for="report-resident-name">Your Name <span style="color: red;">*</span></label>
+                <input type="text" id="report-resident-name" class="form-input" placeholder="e.g. Jane Doe" required>
+              </div>
+
+              <div class="form-group">
+                <label for="report-resident-email">Your Email <span style="color: red;">*</span></label>
+                <input type="email" id="report-resident-email" class="form-input" placeholder="e.g. jane@suncity.com" required>
+              </div>
+
+              <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--border-color);">
+
+              <!-- Target Provider -->
+              <div class="form-group">
+                <label for="report-vendor-select">Select Contractor <span style="color: red;">*</span></label>
+                <select id="report-vendor-select" class="form-input" required>
                   <!-- Populated dynamically -->
                 </select>
               </div>
 
-              <!-- New Contractor Registration Fields (Hidden by default) -->
-              <div id="new-vendor-fields" class="new-vendor-block hidden">
-                <h4 class="mb-2">New Contractor Details</h4>
-                <div class="form-group">
-                  <label for="new-vendor-name">Business Name</label>
-                  <input type="text" id="new-vendor-name" class="form-input" placeholder="e.g. Jack's Plumbing">
-                </div>
-                
-                <div class="form-group">
-                  <label for="new-vendor-category">Service Category</label>
-                  <select id="new-vendor-category" class="form-input" onchange="handleNewVendorCategoryChange()">
-                    <option value="" disabled selected>-- Select Category --</option>
-                    <option value="Home Repairs & Trades">Home Repairs & Trades</option>
-                    <option value="Lawn, Landscaping & Outdoors">Lawn, Landscaping & Outdoors</option>
-                    <option value="Lifestyle & Caregiving">Lifestyle & Caregiving</option>
-                    <option value="Technology & Electronics">Technology & Electronics</option>
-                    <option value="Automotive & Golf Carts">Automotive & Golf Carts</option>
-                    <option value="Home Renovation & Design">Home Renovation & Design</option>
-                    <option value="ZZZ Other Category">ZZZ Other Category</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label>Service Types (Select all that apply) <span style="color: red;">*</span></label>
-                  <div id="new-vendor-services-container" class="checkbox-group-container" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; background: var(--bg-card); display: flex; flex-direction: column; gap: 0.5rem;">
-                    <p class="text-muted" style="font-size: 0.8rem; margin: 0; padding: 0.25rem;">Please select a category first.</p>
-                  </div>
-                </div>
-                
-                <div class="form-group">
-                  <label for="new-vendor-phone">Phone Number</label>
-                  <input type="tel" id="new-vendor-phone" class="form-input" placeholder="e.g. (555) 928-1122" pattern="\(\d{3}\) \d{3}-\d{4}" title="Expected format: (555) 555-5555">
-                  <span class="form-hint mt-2">Expected format: (555) 555-5555</span>
-                </div>
-
-                <div class="form-group">
-                  <label for="new-vendor-email">Email Address</label>
-                  <input type="email" id="new-vendor-email" class="form-input" placeholder="e.g. contact@business.com" required>
-                </div>
-              </div>
-
-              <!-- Review Comment / Notes -->
+              <!-- Issue Type -->
               <div class="form-group">
-                <label for="rev-comment">Review Notes / Comments</label>
-                <textarea id="rev-comment" class="form-input" placeholder="Describe your experience with this contractor..." rows="3" required></textarea>
-              </div>
-
-              <!-- Job Cost Category -->
-              <div class="form-group">
-                <label for="rev-cost">Job Cost Category</label>
-                <select id="rev-cost" class="form-input">
-                  <option value="50" selected>💵 Under $100</option>
-                  <option value="150">💵 Medium ($100 - $300)</option>
-                  <option value="500">💵 Premium ($300+)</option>
+                <label for="report-type">Issue Type <span style="color: red;">*</span></label>
+                <select id="report-type" class="form-input" required>
+                  <option value="" disabled selected>-- Select Issue Type --</option>
+                  <option value="Incorrect contact info">Incorrect contact info</option>
+                  <option value="Out of business / no longer active">Out of business / no longer active</option>
+                  <option value="Poor service / quality issue">Poor service / quality issue</option>
+                  <option value="Unprofessional behavior">Unprofessional behavior</option>
+                  <option value="Other">Other (specify in description)</option>
                 </select>
               </div>
 
-              <!-- Punctuality Checkbox -->
-              <div class="form-group-checkbox">
-                <input type="checkbox" id="rev-punctual" checked>
-                <label for="rev-punctual">⏱️ Contractor arrived on time</label>
-              </div>
-
-              <!-- Star Tap Rating -->
-              <div class="form-group text-center mt-4">
-                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Your Rating</label>
-                <div id="star-rating-container" class="star-rating-tap-container">
-                  <span class="star-tap" data-value="1" onclick="setStarRating(1)">★</span>
-                  <span class="star-tap" data-value="2" onclick="setStarRating(2)">★</span>
-                  <span class="star-tap" data-value="3" onclick="setStarRating(3)">★</span>
-                  <span class="star-tap" data-value="4" onclick="setStarRating(4)">★</span>
-                  <span class="star-tap" data-value="5" onclick="setStarRating(5)">★</span>
-                </div>
-                <input type="hidden" id="rev-rating" value="1">
+              <!-- Description -->
+              <div class="form-group">
+                <label for="report-description">Description of Issue <span style="color: red;">*</span></label>
+                <textarea id="report-description" class="form-input" placeholder="Please describe the issue in detail..." rows="4" required></textarea>
               </div>
 
               <p class="terms-reaffirmation-text" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1.25rem; margin-bottom: 0.75rem; text-align: center; line-height: 1.3;">
-                By submitting this review, you reaffirm your agreement to our <a href="#" onclick="showTermsModalFromForm(event)" style="color: var(--primary); text-decoration: underline;">Terms of Service</a>.
+                By submitting this report, you reaffirm your agreement to our <a href="#" onclick="showTermsModalFromForm(event)" style="color: var(--primary); text-decoration: underline;">Terms of Service</a>.
               </p>
 
               <div class="mobile-form-actions">
-                <button type="button" class="btn btn-secondary" onclick="cancelRecommendation()">Cancel</button>
-                <button type="submit" class="btn btn-success">Submit</button>
+                <button type="button" class="btn btn-secondary" onclick="cancelReport()">Cancel</button>
+                <button type="submit" class="btn btn-success">Submit Report</button>
               </div>
-
             </form>
           </div>
         </section>
+
 
       </main>
 
@@ -203,23 +235,7 @@
         </div>
       </div>
 
-      <!-- VIEW 4: COMMUNITY PIN VERIFICATION OVERLAY (Slide-up Sheet) -->
-      <div id="pin-modal" class="bottom-sheet-overlay hidden">
-        <div class="bottom-sheet-content" style="text-align: center; padding-top: 2rem;">
-          <div class="bottom-sheet-drag-handle" onclick="closePinModal()"></div>
-          <button class="close-sheet-btn" onclick="closePinModal()">&times;</button>
-          
-          <div class="gate-icon-container" style="width: 50px; height: 50px; font-size: 1.5rem; margin: 0 auto 1rem;">🔑</div>
-          <h3>Verify Community PIN</h3>
-          <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.25rem;">Enter the 4-digit Sun City Peachtree Community PIN.</p>
-          
-          <div class="form-group" style="margin-bottom: 1.25rem;">
-            <input type="password" id="community-pin-input" class="form-input text-center" maxlength="4" placeholder="••••" style="font-size: 1.80rem; letter-spacing: 0.4rem; padding: 0.4rem; font-family: monospace; width: 160px; margin: 0 auto;" autocomplete="one-time-code">
-          </div>
-          
-          <button class="btn btn-primary" onclick="verifyCommunityPIN()" style="width: 160px; margin: 0 auto;">Verify PIN</button>
-        </div>
-      </div>
+
 
       <!-- VIEW 5: MANDATORY LEGAL CONSENT GATE OVERLAY -->
       <div id="consent-modal" class="consent-overlay hidden">

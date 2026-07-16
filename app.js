@@ -4,8 +4,7 @@
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzcknWnyO5imXP3rL-Mek72UzfM7ton3oq4r1LiAWaLDFOtmYQIphmtBbpQncAwqF_J/exec";
 
 // Global State
-let isPinVerified = !!sessionStorage.getItem('helpfind_session_pin'); // Cache PIN verification in current browser session
-let actionPending = null; // 'leave-review' or 'add-new'
+let actionPending = null;
 let currentView = 'directory';
 let activeFilters = {
   discount: false,
@@ -26,24 +25,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize mock data database
   initDatabase();
   
-  // Set up form submission handler
-  document.getElementById('form-add-review').addEventListener('submit', handleSubmitReview);
+  // Set up form submission handlers
+  const referForm = document.getElementById('form-refer-provider');
+  if (referForm) {
+    referForm.addEventListener('submit', handleSubmitReferral);
+  }
+  const reportForm = document.getElementById('form-report-issue');
+  if (reportForm) {
+    reportForm.addEventListener('submit', handleSubmitIssue);
+  }
 
   // Auto-format phone input dynamically as user types digits
-  const phoneInput = document.getElementById('new-vendor-phone');
+  const phoneInput = document.getElementById('refer-vendor-phone');
   if (phoneInput) {
     phoneInput.addEventListener('input', handlePhoneInput);
   }
-  
-  // Set up click handlers on stars
-  setStarRating(1); // Default to 1 star on form init
-  
-  // Add listener for community PIN keypresses
-  document.getElementById('community-pin-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      verifyCommunityPIN();
-    }
-  });
 
   // Set up network listeners for sync status
   window.addEventListener('online', () => {
@@ -100,9 +96,8 @@ function switchView(viewName) {
   const activeNav = document.getElementById(`nav-${viewName}`);
   if (activeNav) activeNav.classList.add('active');
 
-  // Hide all views
-  document.getElementById('view-directory').classList.add('hidden');
-  document.getElementById('view-add-review').classList.add('hidden');
+  // Hide all views dynamically
+  document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
 
   // Show active view
   const targetView = document.getElementById(`view-${viewName}`);
@@ -111,8 +106,8 @@ function switchView(viewName) {
   // Post-view-switch actions
   if (viewName === 'directory') {
     filterDirectory();
-  } else if (viewName === 'add-review') {
-    populateVendorDropdown();
+  } else if (viewName === 'report-issue') {
+    populateReportVendorDropdown();
   }
 }
 
@@ -123,119 +118,158 @@ function handleProviderDropdownChange() {
   
   if (val === 'choose') return;
   
-  actionPending = val;
-  
-  if (isPinVerified) {
-    executeGatedAction();
-  } else {
-    openPinGate();
+  if (val === 'report-issue') {
+    switchView('report-issue');
+    // Clear form
+    document.getElementById('form-report-issue').reset();
+    populateReportVendorDropdown();
+  } else if (val === 'refer-provider') {
+    switchView('refer-provider');
+    // Clear form
+    document.getElementById('form-refer-provider').reset();
+    document.getElementById('refer-vendor-services-container').innerHTML = '<p class="text-muted" style="font-size: 0.8rem; margin: 0; padding: 0.25rem;">Please select a category first.</p>';
   }
   
   // Reset select menu back to "Provider" title
   selectNav.value = 'choose';
 }
 
-// Community PIN Gate Modals
-function openPinGate() {
-  document.getElementById('community-pin-input').value = '';
-  document.getElementById('pin-modal').classList.remove('hidden');
-  document.getElementById('community-pin-input').focus();
-}
-
-function closePinModal() {
-  document.getElementById('pin-modal').classList.add('hidden');
-  actionPending = null;
-}
-
-async function verifyCommunityPIN() {
-  const pinInput = document.getElementById('community-pin-input');
-  const pin = pinInput.value.trim();
-  const verifyBtn = document.querySelector('#pin-modal .btn-primary');
-
-  if (!pin) return;
-
-  verifyBtn.disabled = true;
-  verifyBtn.textContent = 'Verifying...';
-
-  try {
-    const response = await fetch(`${GOOGLE_SHEETS_API_URL}?action=verify_pin&pin=${encodeURIComponent(pin)}`);
-    if (!response.ok) throw new Error('Network error during verification');
-    
-    const data = await response.json();
-    if (data.status === 'success') {
-      isPinVerified = true;
-      sessionStorage.setItem('helpfind_session_pin', pin);
-      document.getElementById('pin-modal').classList.add('hidden');
-      executeGatedAction();
-      showToast('PIN verified. Access granted.');
-    } else {
-      throw new Error(data.message || 'Invalid PIN');
-    }
-  } catch (err) {
-    // Add visual error shake
-    pinInput.style.animation = 'none';
-    setTimeout(() => {
-      pinInput.style.animation = 'scaleIn 0.2s ease-out';
-    }, 10);
-    showToast(err.message || 'Invalid Community PIN. Please try again.', true);
-  } finally {
-    verifyBtn.disabled = false;
-    verifyBtn.textContent = 'Verify PIN';
-  }
-}
-
-// Execute Action after PIN check
-function executeGatedAction() {
-  if (actionPending === 'leave-review') {
-    switchView('add-review');
-    
-    // Show existing selector dropdown, hide register inputs
-    document.getElementById('rev-select-wrapper').classList.remove('hidden');
-    document.getElementById('new-vendor-fields').classList.add('hidden');
-    
-    // Default select to first valid contractor, set stars
-    populateVendorDropdown();
-    document.getElementById('rev-vendor-select').value = "";
-    setStarRating(1);
-  } 
-  
-  else if (actionPending === 'add-new') {
-    switchView('add-review');
-    
-    // Hide selector dropdown, force select value to new-vendor, reveal register inputs
-    document.getElementById('rev-select-wrapper').classList.add('hidden');
-    document.getElementById('new-vendor-fields').classList.remove('hidden');
-    
-    populateVendorDropdown();
-    document.getElementById('rev-vendor-select').value = "new-vendor";
-    
-    // Reset new contractor input values
-    document.getElementById('new-vendor-name').value = '';
-    document.getElementById('new-vendor-phone').value = '';
-    document.getElementById('new-vendor-name').required = true;
-    document.getElementById('new-vendor-phone').required = true;
-    setStarRating(1);
-  }
-  
-  actionPending = null;
-}
-
-function cancelRecommendation() {
+function cancelReferral() {
   switchView('directory');
 }
 
-// Interactive Star Selection (Tap-Based Ratings)
-function setStarRating(ratingVal) {
-  document.getElementById('rev-rating').value = ratingVal;
+function cancelReport() {
+  switchView('directory');
+}
+
+function populateReportVendorDropdown() {
+  const select = document.getElementById('report-vendor-select');
+  if (!select) return;
   
-  const stars = document.querySelectorAll('#star-rating-container .star-tap');
-  stars.forEach((star, idx) => {
-    if (idx < ratingVal) {
-      star.classList.add('active');
-    } else {
-      star.classList.remove('active');
-    }
+  select.innerHTML = '<option value="" disabled selected>-- Select Contractor --</option>';
+  
+  // Add option for general issue
+  const generalOption = document.createElement('option');
+  generalOption.value = 'general';
+  generalOption.textContent = '⚠️ General Directory Issue (Not specific to a provider)';
+  select.appendChild(generalOption);
+  
+  const vendors = getVendors();
+  const sortedVendors = [...vendors].sort((a, b) => a.name.localeCompare(b.name));
+  
+  sortedVendors.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.id;
+    opt.textContent = `${v.name} (${v.category})`;
+    select.appendChild(opt);
   });
+}
+
+function handleReferCategoryChange() {
+  const categoryVal = document.getElementById('refer-vendor-category').value;
+  const container = document.getElementById('refer-vendor-services-container');
+  
+  container.innerHTML = '';
+  
+  if (!categoryVal) {
+    container.innerHTML = '<p class="text-muted" style="font-size: 0.8rem; margin: 0; padding: 0.25rem;">Please select a category first.</p>';
+  } else {
+    const catServices = getCategoryServices()[categoryVal] || [];
+    catServices.forEach(srv => {
+      const label = document.createElement('label');
+      label.style.display = 'flex';
+      label.style.alignItems = 'center';
+      label.style.gap = '0.5rem';
+      label.style.fontSize = '0.85rem';
+      label.style.cursor = 'pointer';
+      
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.name = 'refer-vendor-services-checkbox';
+      cb.value = srv;
+      cb.style.width = 'auto';
+      cb.style.cursor = 'pointer';
+      
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(srv));
+      container.appendChild(label);
+    });
+  }
+}
+
+function handleSubmitReferral(e) {
+  e.preventDefault();
+  
+  const residentName = document.getElementById('refer-resident-name').value.trim();
+  const residentEmail = document.getElementById('refer-resident-email').value.trim();
+  const name = document.getElementById('refer-vendor-name').value.trim();
+  const category = document.getElementById('refer-vendor-category').value;
+  const phone = document.getElementById('refer-vendor-phone').value.trim();
+  const email = document.getElementById('refer-vendor-email').value.trim();
+  const comment = document.getElementById('refer-comment').value.trim();
+  
+  // Gather service checkboxes
+  const checkboxes = document.querySelectorAll('input[name="refer-vendor-services-checkbox"]:checked');
+  const services = Array.from(checkboxes).map(cb => cb.value).join(', ');
+  
+  if (!services) {
+    showToast('Please select at least one service type.', true);
+    return;
+  }
+  
+  const referralId = 'ref_' + Date.now();
+  
+  // Construct sync URL
+  const referUrl = `${GOOGLE_SHEETS_API_URL}?action=refer_provider&id=${referralId}&residentName=${encodeURIComponent(residentName)}&residentEmail=${encodeURIComponent(residentEmail)}&name=${encodeURIComponent(name)}&category=${encodeURIComponent(category)}&service=${encodeURIComponent(services)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&comment=${encodeURIComponent(comment)}`;
+  
+  // Add to background sync queue
+  addToSyncQueue(referUrl);
+  
+  // Reset form
+  document.getElementById('form-refer-provider').reset();
+  document.getElementById('refer-vendor-services-container').innerHTML = '<p class="text-muted" style="font-size: 0.8rem; margin: 0; padding: 0.25rem;">Please select a category first.</p>';
+  
+  showToast('Thank you! Your provider referral has been submitted privately for vetting.');
+  switchView('directory');
+}
+
+function handleSubmitIssue(e) {
+  e.preventDefault();
+  
+  const residentName = document.getElementById('report-resident-name').value.trim();
+  const residentEmail = document.getElementById('report-resident-email').value.trim();
+  const vendorId = document.getElementById('report-vendor-select').value;
+  const issueType = document.getElementById('report-type').value;
+  const description = document.getElementById('report-description').value.trim();
+  
+  if (!vendorId) {
+    showToast('Please select a contractor.', true);
+    return;
+  }
+  
+  // Find vendor name
+  let vendorName = 'General Directory Issue';
+  if (vendorId !== 'general') {
+    const vendors = getVendors();
+    const vendor = vendors.find(v => v.id === vendorId);
+    if (vendor) {
+      vendorName = vendor.name;
+    }
+  }
+  
+  const reportId = 'rep_' + Date.now();
+  
+  // Construct sync URL
+  const reportUrl = `${GOOGLE_SHEETS_API_URL}?action=report_issue&id=${reportId}&residentName=${encodeURIComponent(residentName)}&residentEmail=${encodeURIComponent(residentEmail)}&vendorId=${encodeURIComponent(vendorId)}&vendorName=${encodeURIComponent(vendorName)}&issueType=${encodeURIComponent(issueType)}&description=${encodeURIComponent(description)}`;
+  
+  // Add to background sync queue
+  addToSyncQueue(reportUrl);
+  
+  // Reset form
+  document.getElementById('form-report-issue').reset();
+  
+  showToast('Your issue report has been submitted privately. The admin will look into it.');
+  switchView('directory');
 }
 
 // Directory Searching and Filtering
@@ -300,9 +334,9 @@ function filterDirectory() {
     return matchesSearch && matchesCategory && matchesService && matchesDiscount && matchesUnder100 && matchesPunctual;
   });
 
-  // Sort: by rating desc
+  // Sort: alphabetically by provider name (A-Z)
   filtered.sort((a, b) => {
-    return b.rating - a.rating;
+    return a.name.localeCompare(b.name);
   });
 
   renderVendorsList(filtered);
@@ -345,7 +379,6 @@ function renderVendorsList(vendors) {
       <div class="vendor-header">
         <div class="vendor-meta">
           <span class="vendor-category ${getCategoryClass(displayCategory)}">${displayCategory}</span>
-          <span class="vendor-rating">★ ${v.rating.toFixed(1)} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400;">(${v.reviewCount})</span></span>
         </div>
         <h3 class="vendor-name" style="margin-top: 0.25rem; margin-bottom: 0.25rem;">${v.name}</h3>
         <div class="vendor-services-list" style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; margin-bottom: 0.5rem;">
@@ -395,189 +428,6 @@ function incrementTimesUsed(e, providerId) {
   }
 }
 
-// Star Rating Submission & Sync
-function populateVendorDropdown() {
-  const select = document.getElementById('rev-vendor-select');
-  select.innerHTML = '<option value="" disabled selected>-- Select a Contractor --</option>';
-  
-  // Option to register a new contractor
-  const addOpt = document.createElement('option');
-  addOpt.value = 'new-vendor';
-  addOpt.innerText = '➕ + Register a new contractor...';
-  select.appendChild(addOpt);
-
-  const vendors = getVendors();
-  const sorted = [...vendors].sort((a, b) => a.name.localeCompare(b.name));
-  sorted.forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = v.id;
-    opt.innerText = `${v.name} (${v.category} - ${v.service})`;
-    select.appendChild(opt);
-  });
-}
-
-function toggleNewVendorFields() {
-  const select = document.getElementById('rev-vendor-select');
-  const fields = document.getElementById('new-vendor-fields');
-  const nameInput = document.getElementById('new-vendor-name');
-  const phoneInput = document.getElementById('new-vendor-phone');
-  const emailInput = document.getElementById('new-vendor-email');
-
-  if (select.value === 'new-vendor') {
-    fields.classList.remove('hidden');
-    nameInput.required = true;
-    phoneInput.required = true;
-    emailInput.required = true;
-  } else {
-    fields.classList.add('hidden');
-    nameInput.required = false;
-    phoneInput.required = false;
-    emailInput.required = false;
-  }
-}
-
-function handleSubmitReview(e) {
-  e.preventDefault();
-  
-  let vendorId = document.getElementById('rev-vendor-select').value;
-  const rating = parseInt(document.getElementById('rev-rating').value);
-
-  if (!vendorId) {
-    showToast('Please select a contractor.', true);
-    return;
-  }
-
-  // Extract new review values
-  const comment = document.getElementById('rev-comment').value.trim() || `Recommended this provider with a ${rating}-star rating.`;
-  const cost = parseInt(document.getElementById('rev-cost').value) || 50;
-  const punctual = document.getElementById('rev-punctual').checked;
-
-  const vendors = getVendors();
-  let isNew = false;
-  let newName = '';
-  let newCategory = '';
-  let newService = '';
-  let newPhone = '';
-  let newEmail = '';
-
-  // If registering a new contractor
-  if (vendorId === 'new-vendor') {
-    newName = document.getElementById('new-vendor-name').value.trim();
-    newCategory = document.getElementById('new-vendor-category').value;
-    
-    // Gather checked services
-    const checkedCbs = Array.from(document.querySelectorAll('input[name="new-vendor-services-checkbox"]:checked'));
-    newService = checkedCbs.map(cb => cb.value).join(', ');
-    
-    newPhone = document.getElementById('new-vendor-phone').value.trim();
-    const emailInput = document.getElementById('new-vendor-email').value.trim();
-    newEmail = emailInput;
-
-    if (!newName || !newCategory || !newService || !newPhone || !newEmail) {
-      showToast('Please fill out all contractor details including at least one service and a valid email address.', true);
-      return;
-    }
-
-    isNew = true;
-    vendorId = 'v_' + Date.now();
-
-    const newVendorObj = {
-      id: vendorId,
-      name: newName,
-      category: newCategory,
-      service: newService,
-      phone: newPhone,
-      email: newEmail,
-      isPremium: false,
-      hasLeadsPlan: false,
-      rating: rating,
-      reviewCount: 1,
-      minJobCost: cost,
-      offersSeniorDiscount: true,
-      punctualityScore: punctual ? 100 : 0,
-      timesUsed: 1,
-      description: `Trusted provider for ${newService}.`,
-      synced: false
-    };
-
-    vendors.push(newVendorObj);
-    saveVendors(vendors);
-  }
-
-  // Create review object in Local Storage for Details rendering
-  const reviews = getReviews();
-  const newReview = {
-    id: 'r_' + Date.now(),
-    vendorId,
-    authorName: "Verified Resident",
-    authorAddress: "Sun City Peachtree",
-    authorResidentId: "PIN-Verified",
-    date: new Date().toISOString().split('T')[0],
-    rating,
-    cost,
-    punctual,
-    honoredQuote: true,
-    proofOfService: "N/A",
-    aiProofText: "Recommendation verified via community PIN entry.",
-    comment
-  };
-  reviews.push(newReview);
-  saveReviews(reviews);
-
-  // Recalculate vendor scores locally
-  const freshVendors = getVendors();
-  const vendorIndex = freshVendors.findIndex(v => v.id === vendorId);
-  if (vendorIndex !== -1 && !isNew) {
-    const v = freshVendors[vendorIndex];
-    const vendorReviews = reviews.filter(r => r.vendorId === vendorId);
-    
-    // Average rating
-    const avgRating = vendorReviews.reduce((sum, r) => sum + r.rating, 0) / vendorReviews.length;
-    v.rating = Math.round(avgRating * 10) / 10;
-    v.reviewCount = vendorReviews.length;
-
-    // Recalculate punctualityScore
-    const onTimeCount = vendorReviews.filter(r => r.punctual).length;
-    v.punctualityScore = Math.round((onTimeCount / vendorReviews.length) * 100);
-
-    // Recalculate minJobCost (minimum of all submitted costs)
-    const costsList = vendorReviews.map(r => r.cost).filter(c => c !== undefined && c !== null);
-    if (costsList.length > 0) {
-      v.minJobCost = Math.min(...costsList);
-    }
-    
-    saveVendors(freshVendors);
-  }
-
-  // Sync to Google Sheet Database in background
-  const sessionPin = sessionStorage.getItem('helpfind_session_pin') || '';
-  if (isNew) {
-    const addUrl = `${GOOGLE_SHEETS_API_URL}?action=add_provider&id=${vendorId}&name=${encodeURIComponent(newName)}&category=${encodeURIComponent(newCategory)}&service=${encodeURIComponent(newService)}&phone=${encodeURIComponent(newPhone)}&email=${encodeURIComponent(newEmail)}&rating=${rating}&comment=${encodeURIComponent(comment)}&cost=${cost}&punctual=${punctual}&review_id=${newReview.id}&pin=${encodeURIComponent(sessionPin)}`;
-    addToSyncQueue(addUrl);
-  } else {
-    const rateUrl = `${GOOGLE_SHEETS_API_URL}?action=rate&id=${vendorId}&rating=${rating}&comment=${encodeURIComponent(comment)}&cost=${cost}&punctual=${punctual}&review_id=${newReview.id}&pin=${encodeURIComponent(sessionPin)}`;
-    addToSyncQueue(rateUrl);
-  }
-
-  // Clear form
-  document.getElementById('form-add-review').reset();
-  setStarRating(1); // Reset to 1 star
-  
-  // Reset new vendor fields state
-  document.getElementById('new-vendor-fields').classList.add('hidden');
-  document.getElementById('new-vendor-name').required = false;
-  document.getElementById('new-vendor-phone').required = false;
-  document.getElementById('new-vendor-email').required = false;
-  document.getElementById('new-vendor-services-container').innerHTML = '<p class="text-muted" style="font-size: 0.8rem; margin: 0; padding: 0.25rem;">Please select a category first.</p>';
-
-  if (isNew) {
-    showToast('New provider registered successfully! An onboarding email has been sent.');
-  } else {
-    showToast('Your Review Rating for this Provider has been Successfully Entered');
-  }
-  switchView('directory');
-}
-
 // Auto-formats raw digits input into standard US phone format: (XXX) XXX-XXXX
 function handlePhoneInput(e) {
   const input = e.target;
@@ -605,37 +455,14 @@ function openVendorModal(vendorId) {
   const v = vendors.find(item => item.id === vendorId);
   if (!v) return;
 
-  const reviews = getReviews().filter(r => r.vendorId === vendorId);
   const modal = document.getElementById('vendor-modal');
   const body = document.getElementById('modal-vendor-body');
-
-  let reviewsHtml = '';
-  if (reviews.length === 0) {
-    reviewsHtml = '<p class="text-muted">No ratings yet for this provider.</p>';
-  } else {
-    reviews.forEach(r => {
-      reviewsHtml += `
-        <div class="review-card">
-          <div class="review-meta">
-            <span class="review-author">Verified Neighbor Recommendation</span>
-            <span>Date: ${r.date}</span>
-            <span class="review-rating">${'★'.repeat(r.rating)}</span>
-          </div>
-          <p class="review-comment" style="font-size:0.85rem; font-style:italic; margin-top:0.25rem;">"${r.comment}"</p>
-        </div>
-      `;
-    });
-  }
 
   body.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
       <div>
         <span class="vendor-category ${getCategoryClass(v.category)}" style="font-size:0.85rem; font-weight:700;">${v.category} &bull; ${v.service}</span>
         <h2 style="font-size:1.5rem; margin-top:0.25rem;">${v.name}</h2>
-      </div>
-      <div class="text-center" style="background:rgba(15,23,42,0.03); border:1px solid var(--border-color); padding:0.4rem 0.75rem; border-radius:10px;">
-        <div style="font-size:1.5rem; font-weight:800; color:var(--warning);">${v.rating.toFixed(1)}</div>
-        <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">${v.reviewCount} Ratings</div>
       </div>
     </div>
 
@@ -646,13 +473,7 @@ function openVendorModal(vendorId) {
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">✉️ Email: <strong>${v.email}</strong></p>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">💵 Min Job Value: <strong>$${v.minJobCost}</strong></p>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">🏷️ Senior Discount: <strong>${v.offersSeniorDiscount ? 'Yes' : 'No'}</strong></p>
-      <p style="font-size:0.85rem; margin-bottom:0.25rem;">⏱️ Punctuality: <strong>${v.punctualityScore}% On-Time</strong></p>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">🟢 Times Used: <strong>${v.timesUsed || 0} Hires</strong></p>
-    </div>
-
-    <h3 class="reviews-section-title">Community Ratings History</h3>
-    <div class="reviews-scroll-container" style="max-height:220px; overflow-y:auto; padding-right:0.25rem;">
-      ${reviewsHtml}
     </div>
   `;
 
