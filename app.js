@@ -474,8 +474,6 @@ function openVendorModal(vendorId) {
       <h4 class="mb-2" style="font-size:0.9rem;">Contact Profile</h4>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">📞 Phone: <strong><a href="tel:${v.phone.replace(/[^\d-+]/g, '')}" style="color: var(--primary); text-decoration: underline;">${v.phone}</a></strong></p>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">✉️ Email: <strong>${v.email}</strong></p>
-      <p style="font-size:0.85rem; margin-bottom:0.25rem;">💵 Min Job Value: <strong>$${v.minJobCost}</strong></p>
-      <p style="font-size:0.85rem; margin-bottom:0.25rem;">🏷️ Senior Discount: <strong>${v.offersSeniorDiscount ? 'Yes' : 'No'}</strong></p>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">🟢 Times Used: <strong>${v.timesUsed || 0} Hires</strong></p>
     </div>
   `;
