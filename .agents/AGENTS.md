@@ -92,6 +92,9 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Implemented secure backend logging of legal consent audit signatures to a new `"AuditLedger"` sheet tab.
 - [x] Updated Google Apps Script Web App backend to Version 13 to support `refer_provider`, `report_issue`, and `consent` actions.
 - [x] Expanded the integration test suite (`test.js`) to verify the consent overlay, private forms, background sync, and rating invisibility.
+- [x] Changed category and service dropdown text color to high-contrast red.
+- [x] Copied and integrated the Option 1 neighborhood community vector illustration (`assets/home-illustration.png`) into the default unselected directory state.
+- [x] Removed the "Min Job Value" and "Senior Discount" display fields from the provider details modal.
 
 ---
 
@@ -100,11 +103,11 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
    * The main app is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/`.
    * The **ProviderPortal PWA** is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/`.
    * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to GitHub Pages.
-   * **Curation Flow Transition (This Session)**: Yelp-style reviews and stars are fully removed from cards and modals. Immediate routing to private forms is enabled, and the community PIN gate is removed.
-   * **Backend Synchronization (This Session)**: Google Apps Script Web App updated to **Version 13**, enabling seamless logging of consent signatures, referrals, and issue reports directly to dynamic Sheets.
+   * **UI Styling Updates (This Session)**: Category & Service filter dropdowns updated to red text. A custom neighborhood vector illustration card is displayed when no category is selected. Min Job Value and Senior Discount details have been completely removed from the provider details modal.
 2. **Next Steps for Next Session**:
    * **[ToDo - Admin Vetting Workflow]**: Define the process for the Admin to vet referrals from the `"Referrals"` sheet and manually copy them to `"ProviderList"` once approved.
    * **[ToDo - Search Enhancements]**: Add resident-facing keyword search that scans provider description texts and service tags.
    * **[ToDo - Admin Notifications]**: Build email alerts inside the Apps Script backend to notify the Admin when new entries are added to `"Referrals"` or `"ReportedIssues"`.
+   * **[Note - MCP Error Resolution]**: The `notebooklm` MCP server's credentials expired during this session. Advise the user to run `npx notebooklm-mcp-server auth` in their local terminal to re-authenticate if they see any IDE warnings.
 
 
