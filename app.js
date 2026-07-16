@@ -298,6 +298,9 @@ function filterDirectory() {
       <div style="text-align: center; padding: 2.5rem 1.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px;">
         <p class="text-muted" style="font-size: 0.9rem; font-weight: 500; line-height: 1.4;">Please select a category above or type in the search bar to find service providers.</p>
       </div>
+      <div class="home-illustration-container" style="text-align: center; margin-top: 1.5rem; padding: 0.5rem; display: flex; justify-content: center; align-items: center;">
+        <img src="assets/home-illustration.png" alt="HelpFind Neighborhood" style="width: 100%; max-width: 320px; height: auto; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
+      </div>
     `;
     return;
   }

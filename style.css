@@ -255,7 +255,7 @@ header {
   width: 100%;
   background: #ffffff;
   border: 1.5px solid var(--border-color);
-  color: var(--text-main);
+  color: red;
   padding: 0.75rem 1rem;
   border-radius: 10px;
   font-size: 1rem; /* Scaled to 16px to prevent mobile zoom */
