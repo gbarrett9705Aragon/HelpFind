@@ -86,6 +86,12 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Introduced category-specific visual color stripes and highlights on directory cards.
 - [x] Aligned Provider Portal PWA typography (Inter font), header logo section, and simulated desktop device bezel wrapper to match the main HelpFind app.
 - [x] Removed Developer Demo Credentials from the Provider Portal UI to finalize the production login experience.
+- [x] Transitioned main directory to a static, admin-curated bulletin board model, removing all Yelp-style star ratings, numerical scores, and review comment histories.
+- [x] Replaced public rating forms with private "Refer Provider" (suggest new contractor) and "Report Issue" (report listing correction) forms.
+- [x] Removed the community PIN gate entirely, shifting verification and curation monitoring to the spreadsheet administrator.
+- [x] Implemented secure backend logging of legal consent audit signatures to a new `"AuditLedger"` sheet tab.
+- [x] Updated Google Apps Script Web App backend to Version 13 to support `refer_provider`, `report_issue`, and `consent` actions.
+- [x] Expanded the integration test suite (`test.js`) to verify the consent overlay, private forms, background sync, and rating invisibility.
 
 ---
 
@@ -94,14 +100,11 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
    * The main app is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/`.
    * The **ProviderPortal PWA** is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/`.
    * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to GitHub Pages.
-   * New registrations, rating changes, and hire counts automatically update the `ProviderList` sheet in real-time.
-   * Mobile caching and duplicate rendering bugs have been successfully resolved.
-   * **Senior Accessibility Improvements (This Session)**: scaled up body, title, button, and badge font sizes; brightened the mobile background gradient (`#ffffff` to `#f1f5f9`); darkened border/text colors for higher contrast; raised input fields to `1rem` ($16\text{px}$) to prevent mobile browser layout auto-zooming.
-   * **Category Visual Accents (This Session)**: implemented colored top borders on directory cards and category text tags matching the 6-category taxonomy.
-   * **PWA Layout Alignment & Cleanup (This Session)**: updated the Provider Portal PWA to match the main HelpFind app's visual structure, typography (Inter/Outfit), and simulated mobile device bezel frame on desktop; removed Developer Demo Credentials from the PWA login screen to finalize production onboarding.
+   * **Curation Flow Transition (This Session)**: Yelp-style reviews and stars are fully removed from cards and modals. Immediate routing to private forms is enabled, and the community PIN gate is removed.
+   * **Backend Synchronization (This Session)**: Google Apps Script Web App updated to **Version 13**, enabling seamless logging of consent signatures, referrals, and issue reports directly to dynamic Sheets.
 2. **Next Steps for Next Session**:
-   * **[ToDo - Security Gate]**: Address the edge case where a user is both a resident and a provider... they should not be able to write a review of their own service (e.g. check submitter's input email or local device UUID signatures against the target provider's record).
-   * Verify the provider onboarding email verification flow and claim listings in the portal.
-   * Introduce resident-facing search enhancements (e.g. searching review text comments or sorting by punctuality).
-   * Incorporate contractor photo uploads via Apps Script base64 sync.
+   * **[ToDo - Admin Vetting Workflow]**: Define the process for the Admin to vet referrals from the `"Referrals"` sheet and manually copy them to `"ProviderList"` once approved.
+   * **[ToDo - Search Enhancements]**: Add resident-facing keyword search that scans provider description texts and service tags.
+   * **[ToDo - Admin Notifications]**: Build email alerts inside the Apps Script backend to notify the Admin when new entries are added to `"Referrals"` or `"ReportedIssues"`.
+
 
