@@ -544,6 +544,34 @@ function handleRequest(e) {
         params.comment || "",
         "Pending"
       ]);
+
+      // Send alert email to Admin
+      try {
+        var adminEmail = Session.getEffectiveUser().getEmail();
+        if (adminEmail) {
+          var alertSubject = "HelpFind Alert: New Provider Referral Submitted";
+          var alertBody = "Hello Admin,\n\n" +
+                           "A new provider referral has been submitted on HelpFind.\n\n" +
+                           "--- Referral Details ---\n" +
+                           "Referrer Name: " + (params.residentName || "N/A") + "\n" +
+                           "Referrer Email: " + (params.residentEmail || "N/A") + "\n" +
+                           "Suggested Provider Name: " + (params.name || "N/A") + "\n" +
+                           "Category: " + (params.category || "N/A") + "\n" +
+                           "Services Offered: " + (params.service || "N/A") + "\n" +
+                           "Provider Phone: " + (params.phone || "N/A") + "\n" +
+                           "Provider Email: " + (params.email || "N/A") + "\n" +
+                           "Reason/Comment: " + (params.comment || "N/A") + "\n\n" +
+                           "Please review the 'Referrals' sheet to approve or dismiss this suggestion.\n\n" +
+                           "Regards,\n" +
+                           "HelpFind System Alert";
+          MailApp.sendEmail(adminEmail, alertSubject, alertBody, {
+            name: "HelpFind System Alert"
+          });
+        }
+      } catch (err) {
+        console.error("Failed to send referral email alert to admin: " + err.toString());
+      }
+
       return createJSONResponse({ status: "success", message: "Provider referral logged successfully" });
     }
 
@@ -566,6 +594,32 @@ function handleRequest(e) {
         params.description || "",
         "Pending"
       ]);
+
+      // Send alert email to Admin
+      try {
+        var adminEmail = Session.getEffectiveUser().getEmail();
+        if (adminEmail) {
+          var alertSubject = "HelpFind Alert: New Issue Reported";
+          var alertBody = "Hello Admin,\n\n" +
+                           "An issue has been reported on HelpFind.\n\n" +
+                           "--- Issue Details ---\n" +
+                           "Reporter Name: " + (params.residentName || "N/A") + "\n" +
+                           "Reporter Email: " + (params.residentEmail || "N/A") + "\n" +
+                           "Target Provider ID: " + (params.vendorId || "N/A") + "\n" +
+                           "Target Provider Name: " + (params.vendorName || "N/A") + "\n" +
+                           "Issue Type: " + (params.issueType || "N/A") + "\n" +
+                           "Description: " + (params.description || "N/A") + "\n\n" +
+                           "Please review the 'ReportedIssues' sheet to address this report.\n\n" +
+                           "Regards,\n" +
+                           "HelpFind System Alert";
+          MailApp.sendEmail(adminEmail, alertSubject, alertBody, {
+            name: "HelpFind System Alert"
+          });
+        }
+      } catch (err) {
+        console.error("Failed to send issue report email alert to admin: " + err.toString());
+      }
+
       return createJSONResponse({ status: "success", message: "Issue report logged successfully" });
     }
 
