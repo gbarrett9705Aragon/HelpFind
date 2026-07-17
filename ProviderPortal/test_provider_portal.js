@@ -208,7 +208,7 @@
 
       if (name !== "Transevesa of Georgia, LLC") throw new Error("Incorrect provider name displayed");
       if (email !== "transevesa@gmail.com") throw new Error("Incorrect provider email displayed");
-      if (clicks !== "12") throw new Error("Incorrect 'I'll Use' count displayed");
+      if (clicks !== "12") throw new Error("Incorrect 'Call Now' count displayed");
       if (rating !== "5.0") throw new Error("Incorrect rating score displayed");
       if (reviews !== "1") throw new Error("Incorrect reviews count displayed");
       if (!textarea.includes("professional electrician services")) throw new Error("Incorrect service story displayed");
