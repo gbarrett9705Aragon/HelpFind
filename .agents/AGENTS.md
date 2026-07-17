@@ -95,6 +95,9 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
 - [x] Changed category and service dropdown text color to high-contrast red.
 - [x] Copied and integrated the Option 1 neighborhood community vector illustration (`assets/home-illustration.png`) into the default unselected directory state.
 - [x] Removed the "Min Job Value" and "Senior Discount" display fields from the provider details modal.
+- [x] Removed the legal consent terms splash gate overlay (disclaimer feature) and ToS reaffirmations.
+- [x] Renamed the main navigation "Provider" dropdown select menu to "Referral".
+- [x] Renamed the "I'll Use" engagement button to "Call Now" across the main directory and aligned metrics labels in the Provider Portal dashboard.
 
 ---
 
@@ -103,11 +106,11 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
    * The main app is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/`.
    * The **ProviderPortal PWA** is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/`.
    * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to GitHub Pages.
-   * **UI Styling Updates (This Session)**: Category & Service filter dropdowns updated to red text. A custom neighborhood vector illustration card is displayed when no category is selected. Min Job Value and Senior Discount details have been completely removed from the provider details modal.
+   * **UI updates (This Session)**: Removed the legal disclaimer/consent overlay gate upon launch. Renamed the header navigation select menu from "Provider" to "Referral". Renamed the primary card engagement button from "I'll Use" to "Call Now" (and updated matching metrics descriptions in the Provider Portal dashboard).
 2. **Next Steps for Next Session**:
    * **[ToDo - Admin Vetting Workflow]**: Define the process for the Admin to vet referrals from the `"Referrals"` sheet and manually copy them to `"ProviderList"` once approved.
    * **[ToDo - Search Enhancements]**: Add resident-facing keyword search that scans provider description texts and service tags.
    * **[ToDo - Admin Notifications]**: Build email alerts inside the Apps Script backend to notify the Admin when new entries are added to `"Referrals"` or `"ReportedIssues"`.
-   * **[Note - MCP Error Resolution]**: The `notebooklm` MCP server's credentials expired during this session. Advise the user to run `npx notebooklm-mcp-server auth` in their local terminal to re-authenticate if they see any IDE warnings.
+   * **[Note - MCP Error Resolution]**: The `notebooklm` MCP server's credentials expired. Run `npx notebooklm-mcp-server auth` in the local terminal to re-authenticate if needed.
 
 
