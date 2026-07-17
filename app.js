@@ -386,7 +386,7 @@ function renderVendorsList(vendors) {
         <div class="vendor-services-list" style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; margin-bottom: 0.5rem;">
           ${serviceBadges}
         </div>
-        <div class="card-metric-badge">🟢 Used ${v.timesUsed || 0} times by neighbors</div>
+        <div class="card-metric-badge">🟢 Called ${v.timesUsed || 0} times by neighbors</div>
       </div>
       
       <div class="vendor-footer">
@@ -473,7 +473,7 @@ function openVendorModal(vendorId) {
       <h4 class="mb-2" style="font-size:0.9rem;">Contact Profile</h4>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">📞 Phone: <strong><a href="tel:${v.phone.replace(/[^\d-+]/g, '')}" style="color: var(--primary); text-decoration: underline;">${v.phone}</a></strong></p>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">✉️ Email: <strong>${v.email}</strong></p>
-      <p style="font-size:0.85rem; margin-bottom:0.25rem;">🟢 Times Used: <strong>${v.timesUsed || 0} Hires</strong></p>
+      <p style="font-size:0.85rem; margin-bottom:0.25rem;">🟢 Times Called: <strong>${v.timesUsed || 0} Calls</strong></p>
     </div>
   `;
 
