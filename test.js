@@ -206,6 +206,26 @@
       closeVendorModal();
       logToRunner("SUCCESS: Details modal verified free of public Yelp-style ratings and reviews.");
 
+      // 13. Verify keyword search scans name/description
+      const searchInput = document.getElementById('dir-search');
+      searchInput.value = "Fixit";
+      filterDirectory();
+      await wait(200);
+      const cards = document.querySelectorAll('.vendor-card');
+      if (cards.length === 0) {
+        throw new Error("Search for 'Fixit' returned zero results");
+      }
+      for (let card of cards) {
+        if (!card.innerText.includes("Mr. Fixit")) {
+          throw new Error("Search for 'Fixit' returned incorrect provider: " + card.innerText);
+        }
+      }
+      // Reset search
+      searchInput.value = "";
+      filterDirectory();
+      await wait(200);
+      logToRunner("SUCCESS: Keyword search successfully scans and filters list.");
+
       logToRunner("[TEST_RESULT] ALL TESTS PASSED SUCCESSFULLY!");
     } catch (err) {
       logToRunner("[TEST_RESULT] TEST FAILED: " + err.message, true);

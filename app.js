@@ -310,10 +310,17 @@ function filterDirectory() {
     const vendorCategories = getCategoriesForServices(v.service);
 
     // Search Query
-    const matchesSearch = v.name.toLowerCase().includes(searchVal) ||
-                          v.category.toLowerCase().includes(searchVal) ||
-                          (v.service && v.service.toLowerCase().includes(searchVal)) ||
-                          v.description.toLowerCase().includes(searchVal);
+    const nameStr = v.name || '';
+    const catStr = v.category || '';
+    const srvStr = v.service || '';
+    const descStr = v.description || '';
+    const storyStr = v.serviceStories || '';
+
+    const matchesSearch = nameStr.toLowerCase().includes(searchVal) ||
+                          catStr.toLowerCase().includes(searchVal) ||
+                          srvStr.toLowerCase().includes(searchVal) ||
+                          descStr.toLowerCase().includes(searchVal) ||
+                          storyStr.toLowerCase().includes(searchVal);
     
     // Category Dropdown
     const matchesCategory = categoryVal === 'all' || 
@@ -469,7 +476,7 @@ function openVendorModal(vendorId) {
     </div>
 
     <div style="margin-bottom:1rem;">
-      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem; line-height:1.4;">${v.description}</p>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem; line-height:1.4;">${v.serviceStories || v.description}</p>
       <h4 class="mb-2" style="font-size:0.9rem;">Contact Profile</h4>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">📞 Phone: <strong><a href="tel:${v.phone.replace(/[^\d-+]/g, '')}" style="color: var(--primary); text-decoration: underline;">${v.phone}</a></strong></p>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">✉️ Email: <strong>${v.email}</strong></p>
