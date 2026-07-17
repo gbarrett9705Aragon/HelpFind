@@ -109,9 +109,7 @@ The app is built as a lightweight, premium, mobile-first Single Page Application
    * The main app is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/`.
    * The **ProviderPortal PWA** is **100% live** at `https://gbarrett9705aragon.github.io/HelpFind/ProviderPortal/`.
    * Pushes to the GitHub repository `main` branch automatically rebuild and redeploy to GitHub Pages.
-   * **UI updates (This Session)**: Removed the legal disclaimer/consent overlay gate upon launch. Renamed the header navigation select menu from "Provider" to "Referral". Renamed the primary card engagement button from "I'll Use" to "Call Now" and updated "Used"/"Hires" labels/data to "Called"/"Calls" across the main directory and Provider Portal metrics. Added a robust resident keyword search scanning names, categories, services, default descriptions, and custom provider stories.
+   * **UI updates (This Session)**: Removed the legal disclaimer/consent overlay gate upon launch. Renamed the header navigation select menu from "Provider" to "Referral". Renamed the primary card engagement button from "I'll Use" to "Call Now" and updated "Used"/"Hires" labels/data to "Called"/"Calls" across the main directory and Provider Portal metrics. Added a robust resident keyword search scanning names, categories, services, default descriptions, and custom provider stories. Built email alerts inside the Apps Script backend to notify the Admin when new entries are added to `"Referrals"` or `"ReportedIssues"`.
 2. **Next Steps for Next Session**:
    * **[ToDo - Admin Vetting Workflow]**: Define the process for the Admin to vet referrals from the `"Referrals"` sheet and manually copy them to `"ProviderList"` once approved.
    * **[Note - MCP Error Resolution]**: The `notebooklm` MCP server's credentials expired. Run `npx notebooklm-mcp-server auth` in the local terminal to re-authenticate if needed.
-
-
