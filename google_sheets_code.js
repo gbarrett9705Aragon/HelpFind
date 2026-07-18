@@ -46,13 +46,105 @@ function handleRequest(e) {
       return String(h).trim().toLowerCase(); 
     });
 
-    var idCol = headersRow.indexOf("id");
-    var timesUsedCol = headersRow.indexOf("times_used");
-    if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("timesused");
-    var ratingCol = headersRow.indexOf("rating");
-    var reviewsCol = headersRow.indexOf("reviewcount");
-    var endorsementsCol = headersRow.indexOf("endorsements");
-    
+    var idCol = -1;
+    var timesUsedCol = -1;
+    var ratingCol = -1;
+    var reviewsCol = -1;
+    var endorsementsCol = -1;
+    var passwordCol = -1;
+    var statusCol = -1;
+    var serviceStoriesCol = -1;
+
+    var lock = LockService.getScriptLock();
+    try {
+      lock.waitLock(15000); // Wait up to 15 seconds for other concurrent executions to finish
+
+      // Re-read data under lock to ensure we get the latest sheet state
+      data = sheet.getDataRange().getValues();
+      rawHeaders = data[0];
+      headersRow = rawHeaders.map(function(h) { 
+        return String(h).trim().toLowerCase(); 
+      });
+
+      idCol = headersRow.indexOf("id");
+      timesUsedCol = headersRow.indexOf("times_used");
+      if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("timesused");
+      ratingCol = headersRow.indexOf("rating");
+      reviewsCol = headersRow.indexOf("reviewcount");
+      endorsementsCol = headersRow.indexOf("endorsements");
+
+      // Dynamic column insertion for times_used if missing
+      if (timesUsedCol === -1) {
+        sheet.insertColumnAfter(rawHeaders.length);
+        sheet.getRange(1, rawHeaders.length + 1).setValue("Times_Used");
+        data = sheet.getDataRange().getValues();
+        rawHeaders = data[0];
+        headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
+        timesUsedCol = headersRow.indexOf("times_used");
+      }
+
+      // Dynamic column insertion for endorsements if missing
+      if (endorsementsCol === -1) {
+        sheet.insertColumnAfter(rawHeaders.length);
+        sheet.getRange(1, rawHeaders.length + 1).setValue("Endorsements");
+        data = sheet.getDataRange().getValues();
+        rawHeaders = data[0];
+        headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
+        endorsementsCol = headersRow.indexOf("endorsements");
+      }
+
+      // Dynamic column insertion for password if missing
+      passwordCol = headersRow.indexOf("password");
+      if (passwordCol === -1) {
+        sheet.insertColumnAfter(rawHeaders.length);
+        sheet.getRange(1, rawHeaders.length + 1).setValue("Password");
+        data = sheet.getDataRange().getValues();
+        rawHeaders = data[0];
+        headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
+        passwordCol = headersRow.indexOf("password");
+      }
+
+      // Dynamic column insertion for status if missing
+      statusCol = headersRow.indexOf("status");
+      if (statusCol === -1) {
+        sheet.insertColumnAfter(rawHeaders.length);
+        sheet.getRange(1, rawHeaders.length + 1).setValue("Status");
+        data = sheet.getDataRange().getValues();
+        rawHeaders = data[0];
+        headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
+        statusCol = headersRow.indexOf("status");
+      }
+
+      // Dynamic column insertion for service stories if missing
+      serviceStoriesCol = headersRow.indexOf("service stories");
+      if (serviceStoriesCol === -1) serviceStoriesCol = headersRow.indexOf("service_stories");
+      if (serviceStoriesCol === -1) serviceStoriesCol = headersRow.indexOf("servicestories");
+      if (serviceStoriesCol === -1) {
+        sheet.insertColumnAfter(rawHeaders.length);
+        sheet.getRange(1, rawHeaders.length + 1).setValue("Service Stories");
+        data = sheet.getDataRange().getValues();
+        rawHeaders = data[0];
+        headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
+        serviceStoriesCol = headersRow.indexOf("service stories");
+      }
+    } catch (e) {
+      console.error("Lock service error during header initialization: " + e.toString());
+      // Fallback variables if lock times out, read directly from whatever headers exist
+      idCol = headersRow.indexOf("id");
+      timesUsedCol = headersRow.indexOf("times_used");
+      if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("timesused");
+      ratingCol = headersRow.indexOf("rating");
+      reviewsCol = headersRow.indexOf("reviewcount");
+      endorsementsCol = headersRow.indexOf("endorsements");
+      passwordCol = headersRow.indexOf("password");
+      statusCol = headersRow.indexOf("status");
+      serviceStoriesCol = headersRow.indexOf("service stories");
+      if (serviceStoriesCol === -1) serviceStoriesCol = headersRow.indexOf("service_stories");
+      if (serviceStoriesCol === -1) serviceStoriesCol = headersRow.indexOf("servicestories");
+    } finally {
+      lock.releaseLock();
+    }
+
     // Find email column
     var emailCol = -1;
     for (var c = 0; c < headersRow.length; c++) {
@@ -65,61 +157,6 @@ function handleRequest(e) {
     // Find phone column
     var phoneCol = headersRow.indexOf("phone");
     if (phoneCol === -1) phoneCol = headersRow.indexOf("telephone");
-
-    // Dynamic column insertion for times_used if missing
-    if (timesUsedCol === -1) {
-      sheet.insertColumnAfter(rawHeaders.length);
-      sheet.getRange(1, rawHeaders.length + 1).setValue("Times_Used");
-      data = sheet.getDataRange().getValues();
-      rawHeaders = data[0];
-      headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
-      timesUsedCol = headersRow.indexOf("times_used");
-    }
-
-    // Dynamic column insertion for endorsements if missing
-    if (endorsementsCol === -1) {
-      sheet.insertColumnAfter(rawHeaders.length);
-      sheet.getRange(1, rawHeaders.length + 1).setValue("Endorsements");
-      data = sheet.getDataRange().getValues();
-      rawHeaders = data[0];
-      headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
-      endorsementsCol = headersRow.indexOf("endorsements");
-    }
-
-    // Dynamic column insertion for password if missing
-    var passwordCol = headersRow.indexOf("password");
-    if (passwordCol === -1) {
-      sheet.insertColumnAfter(rawHeaders.length);
-      sheet.getRange(1, rawHeaders.length + 1).setValue("Password");
-      data = sheet.getDataRange().getValues();
-      rawHeaders = data[0];
-      headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
-      passwordCol = headersRow.indexOf("password");
-    }
-
-    // Dynamic column insertion for status if missing
-    var statusCol = headersRow.indexOf("status");
-    if (statusCol === -1) {
-      sheet.insertColumnAfter(rawHeaders.length);
-      sheet.getRange(1, rawHeaders.length + 1).setValue("Status");
-      data = sheet.getDataRange().getValues();
-      rawHeaders = data[0];
-      headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
-      statusCol = headersRow.indexOf("status");
-    }
-
-    // Dynamic column insertion for service stories if missing
-    var serviceStoriesCol = headersRow.indexOf("service stories");
-    if (serviceStoriesCol === -1) serviceStoriesCol = headersRow.indexOf("service_stories");
-    if (serviceStoriesCol === -1) serviceStoriesCol = headersRow.indexOf("servicestories");
-    if (serviceStoriesCol === -1) {
-      sheet.insertColumnAfter(rawHeaders.length);
-      sheet.getRange(1, rawHeaders.length + 1).setValue("Service Stories");
-      data = sheet.getDataRange().getValues();
-      rawHeaders = data[0];
-      headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
-      serviceStoriesCol = headersRow.indexOf("service stories");
-    }
 
     if (idCol === -1) idCol = 0;
 
