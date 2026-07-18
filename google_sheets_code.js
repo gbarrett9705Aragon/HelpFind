@@ -67,20 +67,27 @@ function handleRequest(e) {
       });
 
       idCol = headersRow.indexOf("id");
-      timesUsedCol = headersRow.indexOf("times_used");
+      timesUsedCol = headersRow.indexOf("times called");
+      if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("times_called");
+      if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("timescalled");
+      if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("times_used");
       if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("timesused");
+      
       ratingCol = headersRow.indexOf("rating");
-      reviewsCol = headersRow.indexOf("reviewcount");
+      reviewsCol = headersRow.indexOf("review count");
+      if (reviewsCol === -1) reviewsCol = headersRow.indexOf("review_count");
+      if (reviewsCol === -1) reviewsCol = headersRow.indexOf("reviewcount");
+      
       endorsementsCol = headersRow.indexOf("endorsements");
 
-      // Dynamic column insertion for times_used if missing
+      // Dynamic column insertion for times_used/called if missing
       if (timesUsedCol === -1) {
         sheet.insertColumnAfter(rawHeaders.length);
-        sheet.getRange(1, rawHeaders.length + 1).setValue("Times_Used");
+        sheet.getRange(1, rawHeaders.length + 1).setValue("Times Called");
         data = sheet.getDataRange().getValues();
         rawHeaders = data[0];
         headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
-        timesUsedCol = headersRow.indexOf("times_used");
+        timesUsedCol = headersRow.indexOf("times called");
       }
 
       // Dynamic column insertion for endorsements if missing
@@ -131,10 +138,15 @@ function handleRequest(e) {
       console.error("Lock service error during header initialization: " + e.toString());
       // Fallback variables if lock times out, read directly from whatever headers exist
       idCol = headersRow.indexOf("id");
-      timesUsedCol = headersRow.indexOf("times_used");
+      timesUsedCol = headersRow.indexOf("times called");
+      if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("times_called");
+      if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("timescalled");
+      if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("times_used");
       if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("timesused");
       ratingCol = headersRow.indexOf("rating");
-      reviewsCol = headersRow.indexOf("reviewcount");
+      reviewsCol = headersRow.indexOf("review count");
+      if (reviewsCol === -1) reviewsCol = headersRow.indexOf("review_count");
+      if (reviewsCol === -1) reviewsCol = headersRow.indexOf("reviewcount");
       endorsementsCol = headersRow.indexOf("endorsements");
       passwordCol = headersRow.indexOf("password");
       statusCol = headersRow.indexOf("status");
@@ -511,8 +523,8 @@ function handleRequest(e) {
         else if (colName === "phone") newRow.push(params.phone);
         else if (colName === "email" || colName.indexOf("email") !== -1) newRow.push(params.email || "");
         else if (colName === "rating") newRow.push(Number(params.rating || 5));
-        else if (colName === "reviewcount") newRow.push(1);
-        else if (colName === "times_used" || colName === "timesused") newRow.push(1);
+        else if (colName === "reviewcount" || colName === "review_count" || colName === "review count") newRow.push(1);
+        else if (colName === "times_used" || colName === "timesused" || colName === "times_called" || colName === "timescalled" || colName === "times called") newRow.push(1);
         else if (colName === "endorsements") newRow.push(0);
         else if (colName === "service stories" || colName === "service_stories" || colName === "servicestories") newRow.push("");
         else if (colName === "password") newRow.push(tempPassword);
@@ -778,8 +790,8 @@ function handleRequest(e) {
             else if (colName === "phone") provider.phone = String(val).trim();
             else if (colName === "email" || colName.indexOf("email") !== -1) provider.email = String(val).trim();
             else if (colName === "rating") provider.rating = Number(val) || 5;
-            else if (colName === "reviewcount") provider.reviewCount = Number(val) || 1;
-            else if (colName === "times_used" || colName === "timesused") provider.timesUsed = Number(val) || 0;
+            else if (colName === "reviewcount" || colName === "review_count" || colName === "review count") provider.reviewCount = Number(val) || 1;
+            else if (colName === "times_used" || colName === "timesused" || colName === "times_called" || colName === "timescalled" || colName === "times called") provider.timesUsed = Number(val) || 0;
             else if (colName === "endorsements") provider.endorsements = Number(val) || 0;
             else if (colName === "service stories" || colName === "service_stories" || colName === "servicestories") provider.serviceStories = String(val).trim();
             else if (colName === "status") provider.status = String(val).trim();
@@ -872,8 +884,8 @@ function getProviderDataFromRow(sheet, data, rowIdx, headersRow, idCol, emailCol
     else if (colName === "phone") provider.phone = String(val).trim();
     else if (colName === "email" || colName.indexOf("email") !== -1) provider.email = String(val).trim();
     else if (colName === "rating") provider.rating = Number(val) || 5;
-    else if (colName === "reviewcount") provider.reviewCount = Number(val) || 1;
-    else if (colName === "times_used" || colName === "timesused") provider.timesUsed = Number(val) || 0;
+    else if (colName === "reviewcount" || colName === "review_count" || colName === "review count") provider.reviewCount = Number(val) || 1;
+    else if (colName === "times_used" || colName === "timesused" || colName === "times_called" || colName === "timescalled" || colName === "times called") provider.timesUsed = Number(val) || 0;
     else if (colName === "endorsements") provider.endorsements = Number(val) || 0;
     else if (colName === "service stories" || colName === "service_stories" || colName === "servicestories") provider.serviceStories = String(val).trim();
     else if (colName === "password") provider.password = String(val).trim();
