@@ -51,6 +51,7 @@ function handleRequest(e) {
     if (timesUsedCol === -1) timesUsedCol = headersRow.indexOf("timesused");
     var ratingCol = headersRow.indexOf("rating");
     var reviewsCol = headersRow.indexOf("reviewcount");
+    var endorsementsCol = headersRow.indexOf("endorsements");
     
     // Find email column
     var emailCol = -1;
@@ -73,6 +74,16 @@ function handleRequest(e) {
       rawHeaders = data[0];
       headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
       timesUsedCol = headersRow.indexOf("times_used");
+    }
+
+    // Dynamic column insertion for endorsements if missing
+    if (endorsementsCol === -1) {
+      sheet.insertColumnAfter(rawHeaders.length);
+      sheet.getRange(1, rawHeaders.length + 1).setValue("Endorsements");
+      data = sheet.getDataRange().getValues();
+      rawHeaders = data[0];
+      headersRow = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
+      endorsementsCol = headersRow.indexOf("endorsements");
     }
 
     // Dynamic column insertion for password if missing
@@ -465,6 +476,7 @@ function handleRequest(e) {
         else if (colName === "rating") newRow.push(Number(params.rating || 5));
         else if (colName === "reviewcount") newRow.push(1);
         else if (colName === "times_used" || colName === "timesused") newRow.push(1);
+        else if (colName === "endorsements") newRow.push(0);
         else if (colName === "service stories" || colName === "service_stories" || colName === "servicestories") newRow.push("");
         else if (colName === "password") newRow.push(tempPassword);
         else if (colName === "status") newRow.push("Pending");
@@ -623,6 +635,61 @@ function handleRequest(e) {
       return createJSONResponse({ status: "success", message: "Issue report logged successfully" });
     }
 
+    if (params.action === "endorse") {
+      var vendorId = params.id;
+      var hashedIp = (params.hashed_ip || "").trim().toLowerCase();
+      var uuid = (params.uuid || "").trim();
+
+      if (!vendorId) {
+        return createJSONResponse({ status: "error", message: "Missing provider ID" });
+      }
+      if (!hashedIp) {
+        return createJSONResponse({ status: "error", message: "Missing hashed IP address" });
+      }
+
+      var endorsementsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Endorsements");
+      if (!endorsementsSheet) {
+        endorsementsSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Endorsements");
+        endorsementsSheet.appendRow(["Provider ID", "Hashed IP", "Timestamp", "UUID"]);
+        endorsementsSheet.getRange("A1:D1").setFontWeight("bold");
+        endorsementsSheet.setFrozenRows(1);
+      }
+
+      var endData = endorsementsSheet.getDataRange().getValues();
+      for (var r = 1; r < endData.length; r++) {
+        var rowProvId = String(endData[r][0]).trim();
+        var rowHashedIp = String(endData[r][1]).trim().toLowerCase();
+        if (rowProvId === vendorId && rowHashedIp === hashedIp) {
+          return createJSONResponse({ 
+            status: "error", 
+            code: "already_endorsed", 
+            message: "You have already endorsed this provider." 
+          });
+        }
+      }
+
+      // Record endorsement
+      endorsementsSheet.appendRow([
+        vendorId,
+        hashedIp,
+        new Date().toISOString(),
+        uuid
+      ]);
+
+      // Increment count in ProviderList
+      if (rowIdx === -1) {
+        return createJSONResponse({ status: "error", message: "Provider ID not found in ProviderList" });
+      }
+      var currentEndorsements = Number(sheet.getRange(rowIdx, endorsementsCol + 1).getValue()) || 0;
+      var newEndorsements = currentEndorsements + 1;
+      sheet.getRange(rowIdx, endorsementsCol + 1).setValue(newEndorsements);
+
+      return createJSONResponse({ 
+        status: "success", 
+        new_endorsements: newEndorsements 
+      });
+    }
+
     if (params.action === "consent") {
       var auditSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("AuditLedger");
       if (!auditSheet) {
@@ -676,6 +743,7 @@ function handleRequest(e) {
             else if (colName === "rating") provider.rating = Number(val) || 5;
             else if (colName === "reviewcount") provider.reviewCount = Number(val) || 1;
             else if (colName === "times_used" || colName === "timesused") provider.timesUsed = Number(val) || 0;
+            else if (colName === "endorsements") provider.endorsements = Number(val) || 0;
             else if (colName === "service stories" || colName === "service_stories" || colName === "servicestories") provider.serviceStories = String(val).trim();
             else if (colName === "status") provider.status = String(val).trim();
           }
@@ -769,6 +837,7 @@ function getProviderDataFromRow(sheet, data, rowIdx, headersRow, idCol, emailCol
     else if (colName === "rating") provider.rating = Number(val) || 5;
     else if (colName === "reviewcount") provider.reviewCount = Number(val) || 1;
     else if (colName === "times_used" || colName === "timesused") provider.timesUsed = Number(val) || 0;
+    else if (colName === "endorsements") provider.endorsements = Number(val) || 0;
     else if (colName === "service stories" || colName === "service_stories" || colName === "servicestories") provider.serviceStories = String(val).trim();
     else if (colName === "password") provider.password = String(val).trim();
     else if (colName === "status") provider.status = String(val).trim();

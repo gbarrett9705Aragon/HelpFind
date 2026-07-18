@@ -792,7 +792,11 @@ function migrateVendorTaxonomy(v) {
   if (LEGACY_CATEGORY_MAP[v.category]) {
     v.category = LEGACY_CATEGORY_MAP[v.category];
   }
+  if (v.endorsements === undefined) {
+    v.endorsements = 0;
+  }
 }
+
 
 function getCategoryForService(serviceName) {
   for (const cat in CATEGORY_SERVICES) {
@@ -875,6 +879,10 @@ function initDatabase(forceReset = false) {
         if (v.service === undefined) {
           const def = DEFAULT_VENDORS.find(d => d.id === v.id);
           v.service = def ? def.service : "";
+          updated = true;
+        }
+        if (v.endorsements === undefined) {
+          v.endorsements = 0;
           updated = true;
         }
         if (v.synced === undefined) {

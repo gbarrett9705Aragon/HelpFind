@@ -384,6 +384,8 @@ function renderVendorsList(vendors) {
     const vendorServices = v.service ? v.service.split(',').map(s => s.trim()) : [];
     const serviceBadges = vendorServices.map(s => `<span class="service-badge" style="background: rgba(15, 23, 42, 0.04); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem; padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 500;">${s}</span>`).join(' ');
 
+    const hasEndorsed = localStorage.getItem(`helpfind_endorsed_${v.id}`) === 'true';
+
     card.innerHTML = `
       <div class="vendor-header">
         <div class="vendor-meta">
@@ -394,6 +396,10 @@ function renderVendorsList(vendors) {
           ${serviceBadges}
         </div>
         <div class="card-metric-badge">🟢 Called ${v.timesUsed || 0} times by neighbors</div>
+        
+        <button class="endorse-btn ${hasEndorsed ? 'active' : ''}" onclick="endorseProvider(event, '${v.id}')">
+          👍 ${hasEndorsed ? 'Endorsed' : 'Endorse'} (${v.endorsements || 0})
+        </button>
       </div>
       
       <div class="vendor-footer">
@@ -481,6 +487,7 @@ function openVendorModal(vendorId) {
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">📞 Phone: <strong><a href="tel:${v.phone.replace(/[^\d-+]/g, '')}" style="color: var(--primary); text-decoration: underline;">${v.phone}</a></strong></p>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">✉️ Email: <strong>${v.email}</strong></p>
       <p style="font-size:0.85rem; margin-bottom:0.25rem;">🟢 Times Called: <strong>${v.timesUsed || 0} Calls</strong></p>
+      <p style="font-size:0.85rem; margin-bottom:0.25rem;">👍 Endorsements: <strong>${v.endorsements || 0} Endorsements</strong></p>
     </div>
   `;
 
@@ -797,5 +804,120 @@ async function syncReviewsFromServer() {
     }
   } catch (err) {
     console.warn("Could not sync reviews from Google Sheets:", err);
+  }
+}
+
+// Retrieve public IP and hash with SHA-256
+async function getHashedIP() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3-second timeout
+    
+    const response = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) throw new Error('IP service error');
+    const data = await response.json();
+    const ip = data.ip;
+    
+    // Hash IP address with SHA-256 using Crypto Web API
+    const msgBuffer = new TextEncoder().encode(ip);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (err) {
+    console.warn('Failed to retrieve or hash IP, using local fallback:', err);
+    return "fallback_hashed_ip_" + Math.random().toString(36).substring(2, 10);
+  }
+}
+
+// Generate device UUID if not present
+function getDeviceUUID() {
+  let uuid = localStorage.getItem('helpfind_device_uuid');
+  if (!uuid) {
+    uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+    localStorage.setItem('helpfind_device_uuid', uuid);
+  }
+  return uuid;
+}
+
+// Click to Endorse a Service Provider
+async function endorseProvider(e, providerId) {
+  if (e) e.stopPropagation();
+
+  const endorsedKey = `helpfind_endorsed_${providerId}`;
+  if (localStorage.getItem(endorsedKey) === 'true') {
+    showToast('You have already endorsed this provider!', true);
+    return;
+  }
+
+  const vendors = getVendors();
+  const index = vendors.findIndex(v => v.id === providerId);
+  if (index === -1) return;
+
+  const vendor = vendors[index];
+  
+  // Optimistically update UI
+  vendor.endorsements = (vendor.endorsements || 0) + 1;
+  saveVendors(vendors);
+  localStorage.setItem(endorsedKey, 'true');
+  
+  // Re-render UI immediately
+  filterDirectory();
+  showToast(`Thank you! Your endorsement for ${vendor.name} has been recorded.`);
+
+  const uuid = getDeviceUUID();
+
+  // If online, attempt to sync directly to verify IP address uniqueness
+  if (navigator.onLine) {
+    try {
+      const hashedIp = await getHashedIP();
+      const url = `${GOOGLE_SHEETS_API_URL}?action=endorse&id=${providerId}&hashed_ip=${hashedIp}&uuid=${uuid}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Server error");
+      const result = await response.json();
+
+      if (result.status === "error") {
+        if (result.code === "already_endorsed") {
+          // Revert UI & local storage
+          const freshVendors = getVendors();
+          const vIdx = freshVendors.findIndex(v => v.id === providerId);
+          if (vIdx !== -1) {
+            freshVendors[vIdx].endorsements = Math.max(0, (freshVendors[vIdx].endorsements || 0) - 1);
+            saveVendors(freshVendors);
+          }
+          localStorage.removeItem(endorsedKey);
+          filterDirectory();
+          showToast("You (or someone on your network) have already endorsed this provider.", true);
+        } else {
+          console.warn("Server failed to log endorsement:", result.message);
+        }
+      } else if (result.status === "success" && result.new_endorsements !== undefined) {
+        // Sync server count if different
+        const freshVendors = getVendors();
+        const vIdx = freshVendors.findIndex(v => v.id === providerId);
+        if (vIdx !== -1 && freshVendors[vIdx].endorsements !== result.new_endorsements) {
+          freshVendors[vIdx].endorsements = result.new_endorsements;
+          saveVendors(freshVendors);
+          filterDirectory();
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to check duplicate endorsement online, queuing sync:", err);
+      // Queue background sync if error
+      const hashedIp = await getHashedIP();
+      const url = `${GOOGLE_SHEETS_API_URL}?action=endorse&id=${providerId}&hashed_ip=${hashedIp}&uuid=${uuid}`;
+      addToSyncQueue(url);
+    }
+  } else {
+    // Offline - queue sync
+    const hashedIp = await getHashedIP();
+    const url = `${GOOGLE_SHEETS_API_URL}?action=endorse&id=${providerId}&hashed_ip=${hashedIp}&uuid=${uuid}`;
+    addToSyncQueue(url);
   }
 }

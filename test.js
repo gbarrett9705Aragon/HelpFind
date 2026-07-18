@@ -32,8 +32,41 @@
           headers: { 'Content-Type': 'application/json' }
         });
       }
-      if (url.includes('action=refer_provider') || url.includes('action=report_issue') || url.includes('action=consent')) {
-        return new Response(JSON.stringify({ status: 'success' }), {
+      if (url.includes('action=get_providers')) {
+        return new Response(JSON.stringify({
+          status: 'success',
+          providers: [
+            {
+              id: 'v1',
+              name: 'Mr. Fixit',
+              category: 'Home Repairs & Trades',
+              service: 'Apple/PC/Tablet Repair',
+              phone: '770-478-6590',
+              email: 'contact@mrfixit.com',
+              rating: 5,
+              reviewCount: 1,
+              timesUsed: 1,
+              endorsements: 5,
+              status: 'Verified',
+              description: 'Trusted provider for Apple/PC/Tablet Repair.'
+            }
+          ]
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (url.includes('action=get_reviews')) {
+        return new Response(JSON.stringify({
+          status: 'success',
+          reviews: []
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (url.includes('action=refer_provider') || url.includes('action=report_issue') || url.includes('action=consent') || url.includes('action=endorse')) {
+        return new Response(JSON.stringify({ status: 'success', new_endorsements: 6 }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
@@ -50,6 +83,7 @@
       body: JSON.stringify({ message: msg, isError })
     }).catch(() => {});
   }
+  window.logToRunner = logToRunner;
   
   logToRunner("=== RUNNING HELPFIND INTEGRATION TESTS ===");
   
@@ -225,6 +259,107 @@
       filterDirectory();
       await wait(200);
       logToRunner("SUCCESS: Keyword search successfully scans and filters list.");
+
+      // 14. Verify Endorsement Feature
+      // Clear local endorsement storage for v1
+      localStorage.removeItem('helpfind_endorsed_v1');
+      // Set v1 endorsements to 5 initially
+      const vendorsList = getVendors();
+      const v1Index = vendorsList.findIndex(v => v.id === 'v1');
+      if (v1Index !== -1) {
+        vendorsList[v1Index].endorsements = 5;
+        saveVendors(vendorsList);
+      }
+      
+      // Set search input to ensure the card is rendered
+      const sInput = document.getElementById('dir-search');
+      sInput.value = "Fixit";
+      filterDirectory();
+      await wait(200);
+      
+      let v1Card = document.querySelector('.vendor-card');
+      if (!v1Card || !v1Card.innerText.includes('Mr. Fixit')) {
+        const allCards = document.querySelectorAll('.vendor-card');
+        for (let c of allCards) {
+          if (c.innerText.includes('Mr. Fixit')) {
+            v1Card = c;
+            break;
+          }
+        }
+      }
+      if (!v1Card) {
+        throw new Error("Mr. Fixit card not found");
+      }
+      
+      const endorseBtn = v1Card.querySelector('.endorse-btn');
+      if (!endorseBtn) {
+        throw new Error("Endorse button not found on Mr. Fixit card");
+      }
+      if (!endorseBtn.innerText.includes('Endorse (5)')) {
+        throw new Error("Endorse button initial text incorrect: " + endorseBtn.innerText);
+      }
+      
+      // Click Endorse
+      endorseBtn.click();
+      await wait(200);
+      
+      // Re-query the button from the DOM since the card was re-rendered!
+      let freshCard = document.querySelector('.vendor-card');
+      if (!freshCard || !freshCard.innerText.includes('Mr. Fixit')) {
+        const allCards = document.querySelectorAll('.vendor-card');
+        for (let c of allCards) {
+          if (c.innerText.includes('Mr. Fixit')) {
+            freshCard = c;
+            break;
+          }
+        }
+      }
+      let freshEndorseBtn = freshCard.querySelector('.endorse-btn');
+      
+      if (!freshEndorseBtn.innerText.includes('Endorsed (6)')) {
+        throw new Error("Endorse button text after click incorrect: " + freshEndorseBtn.innerText);
+      }
+      
+      if (localStorage.getItem('helpfind_endorsed_v1') !== 'true') {
+        throw new Error("helpfind_endorsed_v1 not set to true in localStorage");
+      }
+      
+      // Try to click again, count should remain 6
+      freshEndorseBtn.click();
+      await wait(200);
+      
+      // Re-query again!
+      freshCard = document.querySelector('.vendor-card');
+      if (!freshCard || !freshCard.innerText.includes('Mr. Fixit')) {
+        const allCards = document.querySelectorAll('.vendor-card');
+        for (let c of allCards) {
+          if (c.innerText.includes('Mr. Fixit')) {
+            freshCard = c;
+            break;
+          }
+        }
+      }
+      freshEndorseBtn = freshCard.querySelector('.endorse-btn');
+      
+      if (!freshEndorseBtn.innerText.includes('Endorsed (6)')) {
+        throw new Error("Endorse button text after second click incorrect: " + freshEndorseBtn.innerText);
+      }
+      
+      // Verify details modal displays endorsements
+      openVendorModal('v1');
+      await wait(200);
+      const updatedModalBody = document.getElementById('modal-vendor-body');
+      if (!updatedModalBody.innerText.includes('6 Endorsements')) {
+        throw new Error("Details modal does not show correct endorsement count: " + updatedModalBody.innerHTML);
+      }
+      closeVendorModal();
+      
+      // Cleanup search input
+      sInput.value = "";
+      filterDirectory();
+      await wait(200);
+      
+      logToRunner("SUCCESS: Endorsement UI flow, local storage updating, and details modal count verified.");
 
       logToRunner("[TEST_RESULT] ALL TESTS PASSED SUCCESSFULLY!");
     } catch (err) {

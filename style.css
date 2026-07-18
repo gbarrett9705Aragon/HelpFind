@@ -428,6 +428,53 @@ header {
   color: var(--primary);
 }
 
+.vendor-header {
+  position: relative;
+  padding-right: 120px;
+}
+
+.endorse-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--border-color);
+  color: var(--primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.endorse-btn:hover {
+  background: rgba(30, 78, 216, 0.08);
+  border-color: var(--primary);
+  transform: scale(1.03);
+}
+
+.endorse-btn:active {
+  transform: scale(0.97);
+}
+
+.endorse-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(30, 78, 216, 0.2);
+}
+
+.endorse-btn.active:hover {
+  background: var(--primary-hover);
+  opacity: 0.95;
+}
+
 .vendor-footer {
   display: flex;
   gap: 0.5rem;
